@@ -1,5 +1,5 @@
 # Operational Task Management System | OTMS
-A Capstone Microservice System dedicated for creating an Operations with Authentication System for Speedex Courier and Forwarder, Inc. that is developed by B.S. Information Technology 3-2 Students of P.U.P Quezon City Campus.
+A Capstone Microservice System dedicated for creating an Operations and Task Management with Authentication/Authorization System for Speedex Courier and Forwarder, Inc. that is developed by B.S. Information Technology 3-2 Students of P.U.P Quezon City Campus.
 
 # OTMS Tech Stack
 - REACT for **Frontend**
