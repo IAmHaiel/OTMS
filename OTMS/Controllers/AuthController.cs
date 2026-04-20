@@ -1,63 +1,56 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using OTMS.DTOs;
-using OTMS.Interfaces;
-using OTMS.Models;
+using OTMS.Entities.DTOs;
+using OTMS.Entities.Models;
+using OTMS.Service.Interfaces;
 
-namespace OTMS.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-public class AuthController : ControllerBase
+namespace OTMS.Controllers
 {
-    private readonly IAuthService _authService;
-
-    public AuthController(IAuthService authService)
+    [Route("api/[controller]")]
+    [ApiController]
+    public class AuthController(IAuthService authService) : ControllerBase
     {
-        _authService = authService;
-    }
 
-    // POST api/auth/login
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] User_LoginDTO request)
-    {
-        if (request is null || request.UserId <= 0 || string.IsNullOrWhiteSpace(request.Password))
-            return BadRequest(new { success = false, message = "User ID and password are required." });
+        // Authentication APIs
+        [HttpPost("register")]
+        public async Task<ActionResult<Employee>> Register(EmployeeRegisterDTO request)
+        {
+            var user = await authService.RegisterAsync(request);
+            if (user is null)
+            {
+                return BadRequest("Employee Number already exists.");
+            }
 
-        var result = await _authService.LoginAsync(request);
+            return Ok(user);
+        }
 
-        if (result is null)
-            return Unauthorized(new { success = false, message = "Invalid user ID or password." });
+        [HttpPost("login")]
+        public async Task<ActionResult<TokenResponseDTO>> Login(EmployeeLoginDTO request)
+        {
+            var result = await authService.LoginAsync(request);
 
-        return Ok(new { success = true, message = "Login successful.", data = result });
-    }
+            if (result is null)
+            {
+                return BadRequest("Invalid Employee Number or password");
+            }
 
-    // POST api/auth/register
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] User_RegisterDTO request)
-    {
-        if (request is null)
-            return BadRequest(new { success = false, message = "Invalid request." });
+            return Ok(result);
+        }
 
-        var result = await _authService.RegisterAsync(request);
+        [HttpPost("refresh-token")]
+        public async Task<ActionResult<TokenResponseDTO>> RefreshToken(RefreshTokenRequestDTO request)
+        {
+            var result = await authService.RefreshTokensAsync(request);
+            if (result is null
+                || result.AccessToken is null
+                || result.RefreshToken is null)
+            {
+                return Unauthorized("Invalid refresh token.");
+            }
 
-        if (result is null)
-            return BadRequest(new { success = false, message = "Employee with this contact number already exists." });
+            return Ok(result);
+        }
 
-        return Ok(new { success = true, message = "Employee registered successfully.", data = result });
-    }
-
-    // POST api/auth/refresh-token
-    [HttpPost("refresh-token")]
-    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDTO request)
-    {
-        if (request is null)
-            return BadRequest(new { success = false, message = "Invalid request." });
-
-        var result = await _authService.RefreshTokensAsync(request);
-
-        if (result is null)
-            return Unauthorized(new { success = false, message = "Invalid or expired refresh token." });
-
-        return Ok(new { success = true, data = result });
     }
 }

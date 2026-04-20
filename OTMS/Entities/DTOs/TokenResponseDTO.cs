@@ -1,4 +1,4 @@
-﻿namespace OTMS.Models
+﻿namespace OTMS.Entities.DTOs
 {
     public class TokenResponseDTO
     {

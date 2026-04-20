@@ -1,8 +1,8 @@
-﻿namespace OTMS.Models
+﻿namespace OTMS.Entities.DTOs
 {
     public class RefreshTokenRequestDTO
     {
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         public required string RefreshToken { get; set; }
     }
 }
