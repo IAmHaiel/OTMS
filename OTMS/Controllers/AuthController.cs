@@ -52,6 +52,5 @@ namespace OTMS.Controllers
             return Ok(result);
         }
 
-
     }
 }
