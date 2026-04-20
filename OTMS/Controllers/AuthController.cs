@@ -20,7 +20,7 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] User_LoginDTO request)
     {
-        if (request is null || request.UserId <= 0 || string.IsNullOrWhiteSpace(request.PasswordHash))
+        if (request is null || request.UserId <= 0 || string.IsNullOrWhiteSpace(request.Password))
             return BadRequest(new { success = false, message = "User ID and password are required." });
 
         var result = await _authService.LoginAsync(request);
