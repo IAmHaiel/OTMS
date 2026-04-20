@@ -33,7 +33,7 @@ public class AuthService : IAuthService
             return null;
 
         if (new PasswordHasher<Employee>()
-            .VerifyHashedPassword(employee, employee.PasswordHash, request.PasswordHash)
+            .VerifyHashedPassword(employee, employee.PasswordHash, request.Password)
             == PasswordVerificationResult.Failed)
             return null;
 
@@ -52,7 +52,7 @@ public class AuthService : IAuthService
         employee.ContactNo = request.ContactNo;
         employee.Role = request.Role;
         employee.PasswordHash = new PasswordHasher<Employee>()
-            .HashPassword(employee, request.PasswordHash);
+            .HashPassword(employee, request.Password);
 
         _context.Employees.Add(employee);
         await _context.SaveChangesAsync();
