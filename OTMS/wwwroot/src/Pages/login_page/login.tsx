@@ -13,34 +13,28 @@ export default function Login() {
         setStatusType('');
 
         try {
-            const API_BASE = 'https://localhost:7048';
-            const response = await fetch(`${API_BASE}/api/auth/login`, {
+            const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ employeeId, password }),
+                body: JSON.stringify({ employeeNumber: employeeId, password }),
             });
 
             const data = await response.json();
 
-            if (response.ok && data.success) {
-                setStatusMessage(data.message || 'Login successful.');
-                setStatusType('success');
-
-                if (data.token) {
-                    localStorage.setItem('authToken', data.token);
-                }
-
-                localStorage.setItem('employeeId', data.employeeId || employeeId);
+            if (response.ok) {
+                localStorage.setItem('authToken', data.accessToken ?? '');
+                localStorage.setItem('refreshToken', data.refreshToken ?? '');
+                localStorage.setItem('employeeId', employeeId);
                 window.location.href = '/dashboard';
             } else {
-                setStatusMessage(data.message || 'Invalid Employee ID or password.');
+                setStatusMessage(data || 'Invalid Employee ID or password.');
                 setStatusType('error');
             }
-        } catch (error) {
+        } catch {
             setStatusMessage('Unable to reach the server. Please try again later.');
             setStatusType('error');
         }
-    }; 
+    };
 
     return (
         <div className="login-page">
@@ -90,7 +84,7 @@ export default function Login() {
 
                     {statusMessage && (
                         <div
-                            className={`login-alert ${statusType === 'error' ? 'error' : statusType === 'success' ? 'success' : ''}`}
+                            className={`login-alert ${statusType}`}
                             style={{
                                 background: statusType === 'error' ? '#FFF1F1' : '#F1FAF6',
                                 border: `1px solid ${statusType === 'error' ? '#FFCDCD' : '#B7E1CB'}`,
