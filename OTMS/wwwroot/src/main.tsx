@@ -3,8 +3,10 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './index.css'
 import LoginPage from './Pages/login_page/login'
-import Dashboard from './Pages/SystemAdmin_Dashboard/SystemAdmin_Dashboard'
+import SystemAdmin_Dashboard from './Pages/SystemAdmin_Dashboard/SystemAdmin_Dashboard'
 import ForgotPasswordPage from './Pages/forgotpassword_page/forgotpassword_page';
+import OpAdmin_Dashboard from './Pages/OpAdmin_Dashboard/OpAdmin_Dashboard';
+import OpEmployee_Dashboard from './Pages/OpEmployee_Dashboard/OpEmployee_Dashboard';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
     const token = localStorage.getItem('authToken');
@@ -21,7 +23,17 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
                 <Route path="/SystemAdmin_Dashboard" element={
                     <PrivateRoute>
-                        <Dashboard />
+                        <SystemAdmin_Dashboard />
+                    </PrivateRoute> 
+                } />
+                <Route path="/OpAdmin_Dashboard" element={
+                    <PrivateRoute>
+                        <OpAdmin_Dashboard />
+                    </PrivateRoute>
+                } />
+                <Route path="/OpEmployee_Dashboard" element={
+                    <PrivateRoute>
+                        <OpEmployee_Dashboard />
                     </PrivateRoute>
                 } />
             </Routes>

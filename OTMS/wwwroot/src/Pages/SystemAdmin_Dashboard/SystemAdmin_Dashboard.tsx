@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
     Users,
     ClipboardList,
@@ -7,13 +8,47 @@ import {
     LayoutDashboard,
     Truck,
     BarChart3,
-    UserCircle2
+    UserCircle2,
+    X,
+    Save,
+    Loader2,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import './SystemAdmin_Dashboard.css';
 import { useNavigate } from 'react-router-dom';
 
-const dailyDeliveries = [
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface EmployeeRegisterDTO {
+    employeeNumber: string;
+    employeeName: string;
+    contactNumber: string;
+    role: string;
+    password: string;
+}
+
+interface FieldError {
+    employeeNumber?: string;
+    employeeName?: string;
+    contactNumber?: string;
+    role?: string;
+}
+
+// FormState has no password fields — password is system-generated on submit
+type FormState = Omit<EmployeeRegisterDTO, 'password'>;
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const ROLES = [
+    'System Admin',
+    'Operations Manager',
+    'Field Operations',
+    'Warehouse Staff',
+    'Delivery Driver',
+    'Dispatcher',
+];
+
+const DAILY_DELIVERIES = [
     { day: 'Mon', weekday: 30, peak: 10 },
     { day: 'Tue', weekday: 25, peak: 15 },
     { day: 'Wed', weekday: 40, peak: 20 },
@@ -23,156 +58,294 @@ const dailyDeliveries = [
     { day: 'Sun', weekday: 15, peak: 5 },
 ];
 
+const EMPTY_FORM: FormState = {
+    employeeNumber: '',
+    employeeName: '',
+    contactNumber: '',
+    role: '',
+};
+
+const NAV_ITEMS = [
+    { icon: LayoutDashboard, label: 'Dashboard' },
+    { icon: Package, label: 'Manage', active: true },
+    { icon: Truck, label: 'Delivery' },
+    { icon: BarChart3, label: 'Analytics' },
+    { icon: UserCircle2, label: 'Profile' },
+];
+
+const STAT_CARDS = [
+    { icon: Users, bg: 'bg-primary', label: 'TOTAL EMPLOYEES', sub: 'Current active staff' },
+    { icon: ClipboardList, bg: 'bg-warning', label: 'ACTIVE TASKS', sub: 'Pending & In Transit' },
+    { icon: CheckCircle2, bg: 'bg-success', label: 'TASKS COMPLETED', sub: 'Total successful deliveries' },
+    { icon: AlertCircle, bg: 'bg-danger', label: 'LOCKED ACCOUNTS', sub: 'Needs admin action' },
+];
+
+const SYSTEM_STATUS_ITEMS = [
+    { icon: Users, bg: 'bg-primary', name: 'Operation System', detail: '— employees active', uptime: '99.9%' },
+    { icon: ClipboardList, bg: 'bg-danger', name: 'Delivery Management', detail: '— total orders', uptime: '99.7%' },
+    { icon: Package, bg: 'bg-success', name: 'Delivery Tracker', detail: '— active shipments', uptime: '98.2%' },
+];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function generatePassword(): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$!';
+    return Array.from({ length: 10 }, () =>
+        chars.charAt(Math.floor(Math.random() * chars.length))
+    ).join('');
+}
+
+function validate(form: FormState): FieldError {
+    const errs: FieldError = {};
+
+    if (!form.employeeNumber.trim()) errs.employeeNumber = 'Employee number is required.';
+    if (!form.employeeName.trim()) errs.employeeName = 'Full name is required.';
+
+    if (!form.contactNumber.trim()) {
+        errs.contactNumber = 'Contact number is required.';
+    } else if (!/^[0-9+\-\s()]{7,20}$/.test(form.contactNumber.trim())) {
+        errs.contactNumber = 'Enter a valid contact number.';
+    }
+
+    if (!form.role) errs.role = 'Please select a role.';
+
+    return errs;
+}
+
+// ─── Add Employee Modal ───────────────────────────────────────────────────────
+
+interface AddEmployeeModalProps {
+    onClose: () => void;
+    onSuccess: (employee: EmployeeRegisterDTO) => void;
+}
+
+function AddEmployeeModal({ onClose, onSuccess }: AddEmployeeModalProps) {
+    const [form, setForm] = useState<FormState>({ ...EMPTY_FORM });
+    const [errors, setErrors] = useState<FieldError>({});
+    const [submitting, setSubmitting] = useState(false);
+    const [apiError, setApiError] = useState('');
+
+    const handleChange =
+        (key: keyof FormState) =>
+            (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+                setForm(prev => ({ ...prev, [key]: e.target.value }));
+                setErrors(prev => ({ ...prev, [key]: undefined }));
+                setApiError('');
+            };
+
+    const handleSubmit = async () => {
+        if (submitting) return;
+
+        const errs = validate(form);
+        if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+
+        setSubmitting(true);
+        setApiError('');
+
+        try {
+            const payload: EmployeeRegisterDTO = {
+                employeeNumber: form.employeeNumber.trim(),
+                employeeName: form.employeeName.trim(),
+                contactNumber: form.contactNumber.trim(),
+                role: form.role,
+                password: generatePassword(),
+            };
+
+            const token = localStorage.getItem('authToken');
+            const res = await fetch('/api/account/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => null);
+                throw new Error(data?.message ?? `Server error: ${res.status}`);
+            }
+
+            onSuccess(payload);
+            onClose();
+        } catch (err: any) {
+            setApiError(err.message ?? 'Something went wrong. Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-card" onClick={e => e.stopPropagation()}>
+                <div className="modal-header">
+                    <div>
+                        <h3>Add New Employee</h3>
+                        <p className="modal-subtitle">Fill in the details to register a new employee account.</p>
+                    </div>
+                    <button className="icon-btn" onClick={onClose} aria-label="Close">
+                        <X size={16} />
+                    </button>
+                </div>
+
+                {apiError && (
+                    <div className="form-api-error">
+                        <AlertCircle size={14} />
+                        <span>{apiError}</span>
+                    </div>
+                )}
+
+                <div className="modal-form">
+                    <div className="field">
+                        <label htmlFor="emp-number">Employee Number</label>
+                        <input
+                            id="emp-number"
+                            type="text"
+                            placeholder="e.g. EMP-0001"
+                            value={form.employeeNumber}
+                            onChange={handleChange('employeeNumber')}
+                            className={errors.employeeNumber ? 'input-error' : ''}
+                        />
+                        {errors.employeeNumber && <span className="field-error"><AlertCircle size={12} />{errors.employeeNumber}</span>}
+                    </div>
+
+                    <div className="field">
+                        <label htmlFor="emp-name">Full Name</label>
+                        <input
+                            id="emp-name"
+                            type="text"
+                            placeholder="e.g. Juan dela Cruz"
+                            value={form.employeeName}
+                            onChange={handleChange('employeeName')}
+                            className={errors.employeeName ? 'input-error' : ''}
+                        />
+                        {errors.employeeName && <span className="field-error"><AlertCircle size={12} />{errors.employeeName}</span>}
+                    </div>
+
+                    <div className="field-row">
+                        <div className="field">
+                            <label htmlFor="emp-contact">Contact Number</label>
+                            <input
+                                id="emp-contact"
+                                type="tel"
+                                placeholder="e.g. +63 917 000 0000"
+                                value={form.contactNumber}
+                                onChange={handleChange('contactNumber')}
+                                className={errors.contactNumber ? 'input-error' : ''}
+                            />
+                            {errors.contactNumber && <span className="field-error"><AlertCircle size={12} />{errors.contactNumber}</span>}
+                        </div>
+
+                        <div className="field">
+                            <label htmlFor="emp-role">Role</label>
+                            <select
+                                id="emp-role"
+                                value={form.role}
+                                onChange={handleChange('role')}
+                                className={errors.role ? 'input-error' : ''}
+                            >
+                                <option value="">Select a role</option>
+                                {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                            </select>
+                            {errors.role && <span className="field-error"><AlertCircle size={12} />{errors.role}</span>}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="modal-actions">
+                    <button className="btn" onClick={onClose} disabled={submitting}>
+                        Cancel
+                    </button>
+                    <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}>
+                        {submitting
+                            ? <><Loader2 size={13} className="spin" /> Registering…</>
+                            : <><Save size={13} /> Register Employee</>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+
 export default function Dashboard() {
     const navigate = useNavigate();
     const employeeId = localStorage.getItem('employeeId') ?? '';
+    const [showAddModal, setShowAddModal] = useState(false);
 
+    const handleLogout = () => {
+        ['employeeId', 'refreshToken', 'authToken'].forEach(k => localStorage.removeItem(k));
+        navigate('/');
+    };
 
     return (
         <div className="dashboard-container">
-            {/* Sidebar */}
             <aside className="sidebar">
                 <div className="sidebar-logo">
-                    <div className="logo-box"></div>
+                    <div className="logo-box" />
                 </div>
-
                 <nav className="sidebar-nav">
-                    <div className="nav-item">
-                        <LayoutDashboard size={22} />
-                        <span>Dashboard</span>
-                    </div>
-                    <div className="nav-item active">
-                        <Package size={22} />
-                        <span>Manage</span>
-                    </div>
-                    <div className="nav-item">
-                        <Truck size={22} />
-                        <span>Delivery</span>
-                    </div>
-                    <div className="nav-item">
-                        <BarChart3 size={22} />
-                        <span>Analytics</span>
-                    </div>
-                    <div className="nav-item">
-                        <UserCircle2 size={22} />
-                        <span>Profile</span>
-                    </div>
+                    {NAV_ITEMS.map(({ icon: Icon, label, active }) => (
+                        <div key={label} className={`nav-item${active ? ' active' : ''}`}>
+                            <Icon size={22} />
+                            <span>{label}</span>
+                        </div>
+                    ))}
                 </nav>
             </aside>
 
-            {/* Main */}
             <main className="main-viewport">
-                {/* Header */}
                 <div className="dashboard-header">
                     <div>
-                        <h2>Board Overview</h2>
+                        <h2>Manage</h2>
                         <p>
-                            Dashboard —{" "}
+                            Speedex Courier Inc. —{' '}
                             {new Date().toLocaleDateString('en-US', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
+                                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
                             })}
                         </p>
                     </div>
 
-                    {/* ✅ Improved User UI */}
                     <div className="header-user">
                         <div className="user-block">
                             <div className="avatar-circle">
                                 {employeeId ? employeeId.charAt(0).toUpperCase() : 'E'}
                             </div>
-
                             <div className="user-text">
                                 <span className="welcome-text">Welcome back</span>
                                 <strong>{employeeId || 'Employee'}</strong>
                             </div>
                         </div>
-
-                        <button
-                            className="logout-btn"
-                            onClick={() => {
-                                localStorage.removeItem('employeeId');
-                                localStorage.removeItem('refreshToken');
-                                localStorage.removeItem('authToken');
-
-                                navigate('/');
-                            }}
-                        >
-                            Logout
-                        </button>
+                        <button className="logout-btn" onClick={handleLogout}>Logout</button>
                     </div>
                 </div>
 
                 <div className="dashboard-content">
-
-                    {/* Stats */}
                     <div className="stats-row">
-
-                        <div className="stat-card">
-                            <div className="stat-icon bg-primary">
-                                <Users size={18} />
+                        {STAT_CARDS.map(({ icon: Icon, bg, label, sub }) => (
+                            <div key={label} className="stat-card">
+                                <div className={`stat-icon ${bg}`}><Icon size={18} /></div>
+                                <div>
+                                    <p>{label}</p>
+                                    <h3 className="skeleton" />
+                                    <small>{sub}</small>
+                                </div>
                             </div>
-                            <div>
-                                <p>TOTAL EMPLOYEES</p>
-                                <h3 className="skeleton"></h3>
-                                <small>Current active staff</small>
-                            </div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-icon bg-warning">
-                                <ClipboardList size={18} />
-                            </div>
-                            <div>
-                                <p>ACTIVE TASKS</p>
-                                <h3 className="skeleton"></h3>
-                                <small>Pending & In Transit</small>
-                            </div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-icon bg-success">
-                                <CheckCircle2 size={18} />
-                            </div>
-                            <div>
-                                <p>TASKS COMPLETED</p>
-                                <h3 className="skeleton"></h3>
-                                <small>Total successful deliveries</small>
-                            </div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-icon bg-danger">
-                                <AlertCircle size={18} />
-                            </div>
-                            <div>
-                                <p>LOCKED ACCOUNTS</p>
-                                <h3 className="skeleton"></h3>
-                                <small>Needs admin action</small>
-                            </div>
-                        </div>
-
+                        ))}
                     </div>
 
-                    {/* Main Grid */}
                     <div className="dashboard-grid">
-
-                        {/* Employees */}
                         <div className="card">
                             <div className="card-header">
                                 <h3>Recent Employees</h3>
                                 <a href="/employees" className="view-all-link">View all →</a>
                             </div>
-
                             <table className="data-table">
                                 <thead>
                                     <tr>
-                                        <th>NAME</th>
-                                        <th>ID</th>
-                                        <th>ROLE</th>
-                                        <th>STATUS</th>
+                                        <th>NAME</th><th>ID</th><th>ROLE</th><th>STATUS</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -188,13 +361,11 @@ export default function Dashboard() {
                             </table>
                         </div>
 
-                        {/* Activity */}
                         <div className="card">
                             <div className="card-header">
                                 <h3>Recent Activity</h3>
                                 <a href="/activity-logs" className="view-all-link">View All</a>
                             </div>
-
                             <div className="activity-feed-list">
                                 <div className="empty-state">
                                     <ClipboardList size={20} />
@@ -202,90 +373,50 @@ export default function Dashboard() {
                                 </div>
                             </div>
                         </div>
-
                     </div>
 
-                    {/* Bottom */}
                     <div className="dashboard-bottom-row">
-
-                        {/* Quick Actions */}
                         <div className="card">
                             <h3>Quick Actions</h3>
-
                             <div className="quick-actions-grid">
-
-                                <button className="quick-action-btn primary">
-                                    <div className="quick-action-icon">
-                                        <Users size={20} />
-                                    </div>
+                                <button className="quick-action-btn primary" onClick={() => setShowAddModal(true)}>
+                                    <div className="quick-action-icon"><Users size={20} /></div>
                                     <span>Add Employee</span>
                                 </button>
-
                                 <button className="quick-action-btn">
-                                    <div className="quick-action-icon warning">
-                                        <ClipboardList size={20} />
-                                    </div>
+                                    <div className="quick-action-icon warning"><ClipboardList size={20} /></div>
                                     <span>Create Task</span>
                                 </button>
-
                             </div>
                         </div>
 
-                        {/* System Status */}
                         <div className="card">
                             <div className="card-header">
                                 <h3>System Status</h3>
                                 <span className="system-all-operational">All Operational</span>
                             </div>
-
                             <div className="system-status-list">
-
-                                <div className="system-status-item">
-                                    <div className="system-icon bg-primary">
-                                        <Users size={16} />
+                                {SYSTEM_STATUS_ITEMS.map(({ icon: Icon, bg, name, detail, uptime }) => (
+                                    <div key={name} className="system-status-item">
+                                        <div className={`system-icon ${bg}`}><Icon size={16} /></div>
+                                        <div className="system-info">
+                                            <span className="system-name">{name}</span>
+                                            <span className="system-detail">{detail}</span>
+                                        </div>
+                                        <span className="system-uptime">{uptime}</span>
                                     </div>
-                                    <div className="system-info">
-                                        <span className="system-name">Operation System</span>
-                                        <span className="system-detail">— employees active</span>
-                                    </div>
-                                    <span className="system-uptime">99.9%</span>
-                                </div>
-
-                                <div className="system-status-item">
-                                    <div className="system-icon bg-danger">
-                                        <ClipboardList size={16} />
-                                    </div>
-                                    <div className="system-info">
-                                        <span className="system-name">Delivery Management</span>
-                                        <span className="system-detail">— total orders</span>
-                                    </div>
-                                    <span className="system-uptime">99.7%</span>
-                                </div>
-
-                                <div className="system-status-item">
-                                    <div className="system-icon bg-success">
-                                        <Package size={16} />
-                                    </div>
-                                    <div className="system-info">
-                                        <span className="system-name">Delivery Tracker</span>
-                                        <span className="system-detail">— active shipments</span>
-                                    </div>
-                                    <span className="system-uptime">98.2%</span>
-                                </div>
-
+                                ))}
                             </div>
                         </div>
 
-                        {/* Chart */}
                         <div className="card">
                             <div className="card-header">
                                 <h3>Delivery Performance</h3>
                                 <span className="system-all-operational alt">This Week</span>
                             </div>
-
                             <div style={{ width: '100%', height: '220px', marginTop: '16px' }}>
                                 <ResponsiveContainer>
-                                    <BarChart data={dailyDeliveries}>
+                                    <BarChart data={DAILY_DELIVERIES}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                         <XAxis dataKey="day" axisLine={false} tickLine={false} />
                                         <Tooltip />
@@ -295,10 +426,16 @@ export default function Dashboard() {
                                 </ResponsiveContainer>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </main>
+
+            {showAddModal && (
+                <AddEmployeeModal
+                    onClose={() => setShowAddModal(false)}
+                    onSuccess={employee => console.log('Employee registered:', employee)}
+                />
+            )}
         </div>
     );
 }
