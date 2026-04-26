@@ -113,14 +113,13 @@ namespace OTMS.Service.Services
 
         // ─── Helper Methods ────────────────────────────────────────────────
 
-        private async Task<TokenResponseDTO> CreateTokenResponse(
-            Employee employee
-        )
+        private async Task<TokenResponseDTO> CreateTokenResponse(Employee employee)
         {
             return new TokenResponseDTO
             {
                 AccessToken = CreateToken(employee),
-                RefreshToken = await GenerateAndSaveRefreshTokenAsync(employee)
+                RefreshToken = await GenerateAndSaveRefreshTokenAsync(employee),
+                Role = employee.Role ?? string.Empty
             };
         }
 

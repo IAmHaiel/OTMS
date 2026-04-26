@@ -7,11 +7,7 @@ import SystemAdmin_Dashboard from './Pages/SystemAdmin_Dashboard/SystemAdmin_Das
 import ForgotPasswordPage from './Pages/forgotpassword_page/forgotpassword_page';
 import OpAdmin_Dashboard from './Pages/OpAdmin_Dashboard/OpAdmin_Dashboard';
 import OpEmployee_Dashboard from './Pages/OpEmployee_Dashboard/OpEmployee_Dashboard';
-
-const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-    const token = localStorage.getItem('authToken');
-    return token ? <>{children}</> : <Navigate to="/" replace />;
-};
+import PrivateRoute from './components/Auth/PrivateRoute';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
@@ -22,17 +18,17 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/forgotpassword_page" element={<ForgotPasswordPage />} />
 
                 <Route path="/SystemAdmin_Dashboard" element={
-                    <PrivateRoute>
+                    <PrivateRoute allowedRoles={['System Admin', 'SuperAdmin']}>
                         <SystemAdmin_Dashboard />
                     </PrivateRoute> 
                 } />
                 <Route path="/OpAdmin_Dashboard" element={
-                    <PrivateRoute>
+                    <PrivateRoute allowedRoles={['Operation Admin']}>
                         <OpAdmin_Dashboard />
                     </PrivateRoute>
                 } />
                 <Route path="/OpEmployee_Dashboard" element={
-                    <PrivateRoute>
+                    <PrivateRoute allowedRoles={['Employee']}>
                         <OpEmployee_Dashboard />
                     </PrivateRoute>
                 } />
