@@ -17,13 +17,14 @@ namespace OTMS.Controllers
         /// <summary>
         /// Checks if the User is Authenticated.
         /// </summary>
-        /// <response code="200">User is Authenticated.</response>
-        /// <response code="401">User is not Authenticated.</response>
+        /// <response code="200">User is authenticated.</response>
+        /// <response code="401">User is not authenticated.</response>
         /// <response code="500">Unexpected server error.</response>
         [Authorize]
-        [HttpGet]
+        [HttpGet("authorize-user")]
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
+        
         [ProducesResponseType(500)]
         public IActionResult AuthenticatedOnlyEndpoint()
         {
@@ -36,13 +37,15 @@ namespace OTMS.Controllers
         /// <summary>
         /// Only accessible to users with the "Admin" role.
         /// </summary>
-        /// <response code="200">User is an admin and is Authorized.</response>
-        /// <response code="401">User is not Authorized.</response>
+        /// <response code="200">User is an "Admin" and is authorized.</response>
+        /// <response code="401">User is not authorized.</response>
+        /// <response code="403">User is not the "Admin".</response>
         /// <response code="500">Unexpected server error.</response>
         [Authorize(Roles = "Admin")]
         [HttpGet("admin-only")]
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(500)]
         public IActionResult AdminOnlyEndpoint()
         {
@@ -53,13 +56,15 @@ namespace OTMS.Controllers
         /// <summary>
         /// Registers a new employee account. Only accessible to users with the "SuperAdmin" role.
         /// </summary>
-        /// <response code="200">User is authorized as a Super Admin.</response>
-        /// <response code="401">User is not Authorized.</response>
+        /// <response code="200">User is authorized as a "SuperAdmin".</response>
+        /// <response code="401">User is not authorized.</response>
+        /// <response code="403">User is not the "SuperAdmin".</response>
         /// <response code="500">Unexpected server error.</response>
         [Authorize(Roles = "SuperAdmin")]
         [HttpPost("superadmin/register")]
         [ProducesResponseType(typeof(EmployeeRegisterDTO), 200)]
         [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(500)]
         public async Task<ActionResult<Employee>> Register(EmployeeRegisterDTO request)
         {
