@@ -9,22 +9,10 @@ namespace OTMS.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController(IAuthService authService) : ControllerBase
+    public class authenticationController(IAuthService authService) : ControllerBase
     {
 
         // Authentication APIs
-        [HttpPost("register")]
-        public async Task<ActionResult<Employee>> Register(EmployeeRegisterDTO request)
-        {
-            var user = await authService.RegisterAsync(request);
-            if (user is null)
-            {
-                return BadRequest("Employee Number already exists.");
-            }
-
-            return Ok(user);
-        }
-
         [HttpPost("login")]
         public async Task<ActionResult<TokenResponseDTO>> Login(EmployeeLoginDTO request)
         {
