@@ -1,0 +1,201 @@
+﻿.locked-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #F4F7FE 0%, #E8ECF4 100%);
+    padding: 24px;
+}
+
+.locked-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    padding: 40px;
+    max-width: 460px;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    border-top: 4px solid var(--status-failed);
+}
+
+.locked-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--status-failed-bg);
+    color: var(--status-failed);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+.locked-title {
+    font-size: 1.5rem;
+    margin-top: -4px;
+}
+
+.locked-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    max-width: 360px;
+}
+
+.locked-info-box {
+    display: flex;
+    gap: 12px;
+    text-align: left;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    width: 100%;
+    margin-top: 8px;
+}
+
+.locked-info-icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.locked-info-box strong {
+    font-size: 0.82rem;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.locked-info-box p {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.locked-user-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+.locked-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.locked-user-info {
+    flex: 1;
+    text-align: left;
+}
+
+    .locked-user-info strong {
+        font-size: 0.85rem;
+        display: block;
+    }
+
+    .locked-user-info span {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+.locked-user-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    background: var(--status-failed-bg);
+    color: var(--status-failed);
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.locked-steps {
+    width: 100%;
+    text-align: left;
+    margin-top: 8px;
+}
+
+    .locked-steps strong {
+        font-size: 0.7rem;
+        letter-spacing: 1px;
+        color: var(--text-primary);
+        display: block;
+        margin-bottom: 12px;
+    }
+
+.locked-step {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.locked-step-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.locked-step p {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.locked-contact-btn {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.locked-back-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+    width: 100%;
+    justify-content: center;
+}
+
+    .locked-back-link:hover {
+        background: var(--bg-main);
+        border-color: var(--border-hover);
+    }
+
+.locked-footer {
+    margin-top: 12px;
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+}
+
+    .locked-footer a {
+        color: var(--primary);
+    }

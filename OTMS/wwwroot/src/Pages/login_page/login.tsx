@@ -153,7 +153,6 @@ export default function Login() {
                             Forgot password?
                         </Link>
                     </div>
-
                     <button type="submit" className="btn btn-dark btn-lg login-submit-btn">
                         LOGIN TO DASHBOARD
                     </button>
@@ -162,6 +161,32 @@ export default function Login() {
                 <p className="login-footer">
                     © 2026 <a href="#">Speedex Courier & Forwarder, Inc.</a>
                 </p>
+
+                {/* Add the new links here */}
+                <div className="additional-links" style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+                    <button
+                        type="button"
+                        className="btn btn-link"
+                        onClick={() => navigate('/OpAdmin_Dashboard')}
+                    >
+                        OP Admin
+                    </button>
+                    <button
+                        type="button"
+                        className="btn btn-link"
+                        onClick={() => navigate('/OpEmployee_Dashboard')}
+                    >
+                        OP Employee
+                    </button>
+
+                    <button
+                        type="button"
+                        className="btn btn-link"
+                        onClick={() => navigate('/SystemAdmin_Dashboard')}
+                    >
+                        System Admin
+                    </button>
+                </div>
             </div>
         </div>
     );

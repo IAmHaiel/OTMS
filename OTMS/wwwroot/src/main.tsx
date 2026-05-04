@@ -18,19 +18,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/forgotpassword_page" element={<ForgotPasswordPage />} />
 
                 <Route path="/SystemAdmin_Dashboard" element={
-                    <PrivateRoute allowedRoles={['System Admin', 'SuperAdmin']}>
                         <SystemAdmin_Dashboard />
-                    </PrivateRoute> 
                 } />
-                <Route path="/OpAdmin_Dashboard" element={
-                    <PrivateRoute allowedRoles={['Operation Admin']}>
-                        <OpAdmin_Dashboard />
-                    </PrivateRoute>
+                <Route path="/OpAdmin_Dashboard" element={<OpAdmin_Dashboard />
                 } />
                 <Route path="/OpEmployee_Dashboard" element={
-                    <PrivateRoute allowedRoles={['Employee']}>
                         <OpEmployee_Dashboard />
-                    </PrivateRoute>
                 } />
             </Routes>
         </BrowserRouter>

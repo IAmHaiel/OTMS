@@ -34,8 +34,22 @@ interface FieldError {
     role?: string;
 }
 
-// FormState has no password fields — password is system-generated on submit
 type FormState = Omit<EmployeeRegisterDTO, 'password'>;
+
+interface ActivityLog {
+    id: number;
+    description: string;
+    timestamp: string;
+}
+
+// Add this type for fetched employees
+interface RecentEmployee {
+    employeeNumber: string;
+    employeeName: string;
+    contactNumber: string;   // ← add this
+    role: string;
+    status: string;
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -282,12 +296,221 @@ function AddEmployeeModal({ onClose, onSuccess }: AddEmployeeModalProps) {
     );
 }
 
+// ─── Employee Details ─────────────────────────────────────────────── //
+
+interface EmployeeDetailModalProps {
+    employee: RecentEmployee;
+    onClose: () => void;
+}
+
+function EmployeeDetailModal({ employee, onClose }: EmployeeDetailModalProps) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [form, setForm] = useState({
+        employeeName: employee.employeeName,
+        contactNumber: employee.contactNumber,
+        role: employee.role,
+    });
+    const [submitting, setSubmitting] = useState(false);
+    const [apiError, setApiError] = useState('');
+
+    const handleChange = (key: keyof typeof form) =>
+        (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+            setForm(prev => ({ ...prev, [key]: e.target.value }));
+            setApiError('');
+        };
+
+    const handleSave = async () => {
+        setSubmitting(true);
+        setApiError('');
+        try {
+            const token = localStorage.getItem('authToken');
+            const res = await fetch(`/api/employees/${employee.employeeNumber}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify(form),
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.message || `Error ${res.status}: Update failed`);
+            }
+
+            setIsEditing(false);
+            alert('Employee details updated successfully!');
+            onClose();
+        } catch (err: any) {
+            setApiError(err.message ?? 'Something went wrong. Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-card" onClick={e => e.stopPropagation()}>
+                <div className="modal-header">
+                    <div>
+                        <h3>Employee Details</h3>
+                        <p className="modal-subtitle">
+                            {isEditing ? 'Editing profile' : 'Viewing profile'} of {employee.employeeName}
+                        </p>
+                    </div>
+                    <button className="icon-btn" onClick={onClose} aria-label="Close">
+                        <X size={16} />
+                    </button>
+                </div>
+
+                {apiError && (
+                    <div className="form-api-error">
+                        <AlertCircle size={14} />
+                        <span>{apiError}</span>
+                    </div>
+                )}
+
+                <div className="modal-form">
+                    <div className="employee-detail-avatar">
+                        <div className="avatar-circle large">
+                            {employee.employeeName.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <h4>{form.employeeName}</h4>
+                            <span className="status-badge active">{employee.status}</span>
+                        </div>
+                    </div>
+
+                    <div className="detail-grid">
+                        <div className="detail-item">
+                            <span className="detail-label">Employee Number</span>
+                            {/* Employee number is read-only */}
+                            <span className="detail-value">{employee.employeeNumber}</span>
+                        </div>
+
+                        <div className="detail-item">
+                            <span className="detail-label">Full Name</span>
+                            {isEditing ? (
+                                <input
+                                    type="text"
+                                    value={form.employeeName}
+                                    onChange={handleChange('employeeName')}
+                                    className="detail-input"
+                                />
+                            ) : (
+                                <span className="detail-value">{form.employeeName}</span>
+                            )}
+                        </div>
+
+                        <div className="detail-item">
+                            <span className="detail-label">Role</span>
+                            {isEditing ? (
+                                <select
+                                    value={form.role}
+                                    onChange={handleChange('role')}
+                                    className="detail-input"
+                                >
+                                    {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                                </select>
+                            ) : (
+                                <span className="detail-value">{form.role}</span>
+                            )}
+                        </div>
+
+                        <div className="detail-item">
+                            <span className="detail-label">Contact Number</span>
+                            {isEditing ? (
+                                <input
+                                    type="tel"
+                                    value={form.contactNumber}
+                                    onChange={handleChange('contactNumber')}
+                                    className="detail-input"
+                                />
+                            ) : (
+                                <span className="detail-value">{form.contactNumber}</span>
+                            )}
+                        </div>
+
+                        <div className="detail-item">
+                            <span className="detail-label">Status</span>
+                            <span className="detail-value">{employee.status}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="modal-actions">
+                    {isEditing ? (
+                        <>
+                            <button className="btn" onClick={() => { setIsEditing(false); setApiError(''); }} disabled={submitting}>
+                                Cancel
+                            </button>
+                            <button className="btn btn-primary" onClick={handleSave} disabled={submitting}>
+                                {submitting
+                                    ? <><Loader2 size={13} className="spin" /> Saving…</>
+                                    : <><Save size={13} /> Save Changes</>
+                                }
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button className="btn" onClick={onClose}>Close</button>
+                            <button className="btn btn-primary" onClick={() => setIsEditing(true)}>
+                                Edit
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
     const navigate = useNavigate();
     const employeeId = localStorage.getItem('employeeId') ?? '';
     const [showAddModal, setShowAddModal] = useState(false);
+
+    // Employees and activity logs state
+    const [employees, setEmployees] = useState<EmployeeRegisterDTO[]>([]);
+    const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+    const [recentEmployees, setRecentEmployees] = useState<RecentEmployee[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedEmployee, setSelectedEmployee] = useState<RecentEmployee | null>(null);
+
+    useEffect(() => {
+        const token = localStorage.getItem('authToken');
+        // Fetch employees
+        fetch('/api/authorization/superadmin/employees', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then(res => res.json())
+            .then(data => setEmployees(data))
+            .catch(err => {
+                setEmployees([]);
+                console.error('Failed to fetch employees:', err);
+            });
+
+        // Fetch activity logs
+        fetch('/api/activity-logs/recent', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then(res => res.json())
+            .then(data => setActivityLogs(data))
+            .catch(err => {
+                setActivityLogs([]);
+                console.error('Failed to fetch activity logs:', err);
+            })
+            .finally(() => setLoading(false));
+
+        // Fetch recent employees
+        fetch('/api/employees/recent')
+            .then(res => res.json())
+            .then(data => setRecentEmployees(data))
+            .catch(() => setRecentEmployees([]))
+            .finally(() => setLoading(false));
+    }, []);
 
     const handleLogout = () => {
         ['employeeId', 'refreshToken', 'authToken'].forEach(k => localStorage.removeItem(k));
@@ -363,14 +586,39 @@ export default function Dashboard() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td colSpan={4}>
-                                            <div className="empty-state">
-                                                <Package size={20} />
-                                                <p>No data available</p>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan={4}>
+                                                <div className="empty-state">
+                                                    <Loader2 size={20} className="spin" />
+                                                    <p>Loading...</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : recentEmployees.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={4}>
+                                                <div className="empty-state">
+                                                    <Package size={20} />
+                                                    <p>No data available</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        recentEmployees.map(emp => (
+                                            <tr
+                                                key={emp.employeeNumber}
+                                                onClick={() => setSelectedEmployee(emp)}
+                                                style={{ cursor: 'pointer' }}
+                                                className="clickable-row"
+                                            >
+                                                <td>{emp.employeeName}</td>
+                                                <td>{emp.employeeNumber}</td>
+                                                <td>{emp.role}</td>
+                                                <td><span className="status-badge active">{emp.status}</span></td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -381,10 +629,24 @@ export default function Dashboard() {
                                 <a href="/activity-logs" className="view-all-link">View All</a>
                             </div>
                             <div className="activity-feed-list">
-                                <div className="empty-state">
-                                    <ClipboardList size={20} />
-                                    <p>No recent activity</p>
-                                </div>
+                                {loading ? (
+                                    <div className="empty-state">
+                                        <Loader2 size={20} className="spin" />
+                                        <p>Loading...</p>
+                                    </div>
+                                ) : activityLogs.length === 0 ? (
+                                    <div className="empty-state">
+                                        <ClipboardList size={20} />
+                                        <p>No recent activity</p>
+                                    </div>
+                                ) : (
+                                    activityLogs.map(log => (
+                                        <div key={log.id} className="activity-feed-item">
+                                            <span>{log.description}</span>
+                                            <span className="activity-timestamp">{new Date(log.timestamp).toLocaleString()}</span>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </div>
                     </div>
@@ -447,7 +709,14 @@ export default function Dashboard() {
             {showAddModal && (
                 <AddEmployeeModal
                     onClose={() => setShowAddModal(false)}
-                    onSuccess={employee => console.log('Employee registered:', employee)}
+                    onSuccess={employee => setEmployees(prev => [employee, ...prev])}
+                />
+            )}
+
+            {selectedEmployee && (
+                <EmployeeDetailModal
+                    employee={selectedEmployee}
+                    onClose={() => setSelectedEmployee(null)}
                 />
             )}
         </div>
