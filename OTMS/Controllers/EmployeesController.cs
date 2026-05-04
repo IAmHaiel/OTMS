@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OTMS.Data;
+using OTMS.Entities.DTOs;
 
 namespace OTMS.Controllers;
 
@@ -28,5 +29,24 @@ public class EmployeesController(OTMSDbContext context) : ControllerBase
             .ToListAsync();
 
         return Ok(employees);
+    }
+
+    // PUT: api/employees/{employeeNumber}
+
+    [HttpPut("{employeeNumber}")]
+    public async Task<IActionResult> UpdateEmployee(string employeeNumber, [FromBody] UpdateEmployeeDto dto)
+    {
+        var employee = await _context.Employees
+            .FirstOrDefaultAsync(e => e.EmployeeNumber == employeeNumber);
+
+        if (employee == null) return NotFound();
+
+        employee.EmployeeName = dto.EmployeeName;
+        employee.ContactNumber = dto.ContactNumber;
+        employee.Role = dto.Role;
+        employee.Status = dto.Status;
+
+        await _context.SaveChangesAsync();
+        return Ok(employee);
     }
 }

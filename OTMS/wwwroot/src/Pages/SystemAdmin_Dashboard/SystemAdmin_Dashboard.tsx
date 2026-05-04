@@ -309,6 +309,7 @@ function EmployeeDetailModal({ employee, onClose }: EmployeeDetailModalProps) {
         employeeName: employee.employeeName,
         contactNumber: employee.contactNumber,
         role: employee.role,
+        status: employee.status,
     });
     const [submitting, setSubmitting] = useState(false);
     const [apiError, setApiError] = useState('');
@@ -351,6 +352,8 @@ function EmployeeDetailModal({ employee, onClose }: EmployeeDetailModalProps) {
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-card" onClick={e => e.stopPropagation()}>
+
+                {/* Header */}
                 <div className="modal-header">
                     <div>
                         <h3>Employee Details</h3>
@@ -363,6 +366,7 @@ function EmployeeDetailModal({ employee, onClose }: EmployeeDetailModalProps) {
                     </button>
                 </div>
 
+                {/* API Error */}
                 {apiError && (
                     <div className="form-api-error">
                         <AlertCircle size={14} />
@@ -370,21 +374,40 @@ function EmployeeDetailModal({ employee, onClose }: EmployeeDetailModalProps) {
                     </div>
                 )}
 
+                {/* Body */}
                 <div className="modal-form">
+
+                    {/* Avatar + Name + Status */}
                     <div className="employee-detail-avatar">
                         <div className="avatar-circle large">
                             {employee.employeeName.charAt(0).toUpperCase()}
                         </div>
-                        <div>
+                        <div className="avatar-info">
                             <h4>{form.employeeName}</h4>
-                            <span className="status-badge active">{employee.status}</span>
+                            <div className="avatar-meta">
+                                {isEditing ? (
+                                    <select
+                                        value={form.status}
+                                        onChange={handleChange('status')}
+                                        className="detail-input status-select"
+                                    >
+                                        <option value="Active">Active</option>
+                                        <option value="Locked">Locked</option>
+                                        <option value="Deactivated">Deactivated</option>
+                                    </select>
+                                ) : (
+                                    <span className={`status-badge ${form.status.toLowerCase()}`}>
+                                        {form.status}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
 
+                    {/* Detail Fields */}
                     <div className="detail-grid">
                         <div className="detail-item">
                             <span className="detail-label">Employee Number</span>
-                            {/* Employee number is read-only */}
                             <span className="detail-value">{employee.employeeNumber}</span>
                         </div>
 
@@ -430,18 +453,19 @@ function EmployeeDetailModal({ employee, onClose }: EmployeeDetailModalProps) {
                                 <span className="detail-value">{form.contactNumber}</span>
                             )}
                         </div>
-
-                        <div className="detail-item">
-                            <span className="detail-label">Status</span>
-                            <span className="detail-value">{employee.status}</span>
-                        </div>
                     </div>
+
                 </div>
 
+                {/* Actions */}
                 <div className="modal-actions">
                     {isEditing ? (
                         <>
-                            <button className="btn" onClick={() => { setIsEditing(false); setApiError(''); }} disabled={submitting}>
+                            <button
+                                className="btn"
+                                onClick={() => { setIsEditing(false); setApiError(''); }}
+                                disabled={submitting}
+                            >
                                 Cancel
                             </button>
                             <button className="btn btn-primary" onClick={handleSave} disabled={submitting}>
@@ -452,14 +476,12 @@ function EmployeeDetailModal({ employee, onClose }: EmployeeDetailModalProps) {
                             </button>
                         </>
                     ) : (
-                        <>
-                            <button className="btn" onClick={onClose}>Close</button>
-                            <button className="btn btn-primary" onClick={() => setIsEditing(true)}>
-                                Edit
-                            </button>
-                        </>
+                        <button className="btn btn-primary" onClick={() => setIsEditing(true)}>
+                            Edit
+                        </button>
                     )}
                 </div>
+
             </div>
         </div>
     );
