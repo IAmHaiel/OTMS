@@ -22,7 +22,8 @@ namespace OTMS.Data
             modelBuilder.Entity<Employee>()
                 .HasOne(e => e.Account)
                 .WithOne(a => a.Employee)
-                .HasForeignKey<Account>(a => a.EmployeeId);
+                .HasForeignKey<Account>(a => a.EmployeeId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Task Relationships
             modelBuilder.Entity<Entities.Models.Task>()
