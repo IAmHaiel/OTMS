@@ -1,11 +1,15 @@
+using Azure.Core;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using OTMS.Data;
+using OTMS.Entities.Models;
 using OTMS.Service.Interfaces;
 using OTMS.Service.Services;
 using System;
+using System.Reflection;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +20,17 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// for frontend development, allowing cross-origin requests from the frontend development server
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DevPolicy", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 // Authorize Button
 builder.Services.AddSwaggerGen(options =>
@@ -46,6 +61,11 @@ builder.Services.AddSwaggerGen(options =>
             Array.Empty<string>()
         }
     });
+
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+
+    options.IncludeXmlComments(xmlPath);
 });
 
 // Authorize / Securing Endpoints
@@ -68,21 +88,65 @@ builder.Services.AddDbContext<OTMSDbContext>(options => options.UseSqlServer(bui
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+static async Task SeedSuperAdminAsync(OTMSDbContext context)
+{
+    // Check if SuperAdmin already exists
+    var exists = await context.Employees
+        .AnyAsync(u => u.Role == "SuperAdmin");
+
+    if (exists)
+        return;
+
+    var superAdmin = new Employee
+    {
+        EmployeeNumber = "SPDX-SPR-01",
+        EmployeeName = "Super Admin",
+        ContactNumber = "0912 671 9251",
+        Role = "SuperAdmin"
+    };
+
+    var passwordHasher = new PasswordHasher<Employee>();
+    superAdmin.PasswordHash = passwordHasher.HashPassword(superAdmin, "SuperAdmin123");
+
+    context.Employees.Add(superAdmin);
+    await context.SaveChangesAsync();
+}
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    var context = services.GetRequiredService<OTMSDbContext>();
+
+    // Apply migrations automatically
+    context.Database.Migrate();
+
+    await SeedSuperAdminAsync(context);
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
+app.UseStaticFiles();
+
+app.UseCors("DevPolicy");
 
 app.UseAuthentication();
 
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapFallbackToFile("index.html");
 
 app.Run();
