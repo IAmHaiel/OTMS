@@ -2,7 +2,7 @@
 {
     public class ActivityLog
     {
-        public Guid LogId { get; set; }
+        public Guid ActivityLogId { get; set; }
         public Guid AccountId { get; set; }
 
         public string ActivityType { get; set; } = string.Empty;
