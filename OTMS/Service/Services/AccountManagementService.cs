@@ -27,6 +27,16 @@ namespace OTMS.Service.Services
                 return null;
             }
 
+            // Prevent deactivation of System Admin accounts
+            var systemAdminAccount = exist.Account.Role;
+            
+            if (systemAdminAccount is not null && systemAdminAccount == "SystemAdmin")
+            {
+                throw new InvalidOperationException("Cannot deactivate a System Admin account.");
+            }
+
+
+            // Account status check to prevent deactivation
             var accountStatus = exist.Account.AccountStatus;
 
             if(accountStatus == "Deactivated")
