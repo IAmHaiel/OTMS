@@ -6,5 +6,6 @@ namespace OTMS.Service.Interfaces
     public interface IAccountManagementService
     {
         Task<DeactivateUserResponseDTO?> DeactivateUser(DeactivateUserDTO request);
+        Task<DeleteUserResponseDTO?> DeleteUser(DeactivateUserDTO request);
     }
 }

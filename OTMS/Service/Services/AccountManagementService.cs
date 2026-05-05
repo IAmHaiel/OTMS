@@ -54,5 +54,30 @@ namespace OTMS.Service.Services
                 DeactivatedAt = DateTime.UtcNow
             };
         }
+
+        public async Task<DeleteUserResponseDTO?> DeleteUser(DeactivateUserDTO request)
+        {
+            // Get the employee by employee number
+            var exist = await context.Employees
+                .Include(e => e.Account)
+                .FirstOrDefaultAsync(e => e.EmployeeNumber == request.EmployeeNumber);
+
+            // Check if the employee exists
+            if (exist is null || exist.Account is null)
+            {
+                return null;
+            }
+
+            // Delete the employee's account
+            context.Employees.Remove(exist);
+            await context.SaveChangesAsync();
+
+            return new DeleteUserResponseDTO
+            {
+                EmployeeNumber = exist.EmployeeNumber,
+                Success = true,
+                DeletedAt = DateTime.UtcNow
+            };
+        }
     }
 }
