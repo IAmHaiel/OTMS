@@ -16,5 +16,9 @@
         public DateTime? UpdatedAt { get; set; }
 
         // Navigation properties
+        public Employee Employee { get; set; } = null!;
+        public ICollection<Task> AssignedTasks { get; set; } = new List<Task>();
+        public ICollection<Task> CreatedTasks { get; set; } = new List<Task>();
+        public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }
 }
