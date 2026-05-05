@@ -54,7 +54,7 @@ namespace OTMS.Service.Services
         )
         {
             var user = await ValidateRefreshTokenAsync(
-                request.UserId,
+                request.AccountId,
                 request.RefreshToken
             );
 
