@@ -11,6 +11,7 @@
         public DateTime? UpdatedAt { get; set; }
 
         // Navigation properties
-
+        public Account? Account { get; set; }
+        public ICollection<TaskComment> Comments { get; set; } = new List<TaskComment>();
     }
 }
