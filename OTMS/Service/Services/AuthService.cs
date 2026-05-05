@@ -21,21 +21,23 @@ namespace OTMS.Service.Services
             EmployeeLoginDTO request
         )
         {
+
             var employee = await context.Employees
+                .Include(e => e.Account)
                 .FirstOrDefaultAsync(
                     u => u.EmployeeNumber == request.EmployeeNumber
                 );
 
-            if (employee is null)
+            if (employee is null || employee.Account is null || string.IsNullOrEmpty(employee.Account.PasswordHash))
             {
                 return null;
             }
 
             var verificationResult =
-                new PasswordHasher<Employee>()
+                new PasswordHasher<Account>()
                     .VerifyHashedPassword(
-                        employee,
-                        employee.PasswordHash,
+                        employee.Account,
+                        employee.Account.PasswordHash,
                         request.Password
                     );
 
