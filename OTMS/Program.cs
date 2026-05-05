@@ -87,6 +87,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 builder.Services.AddDbContext<OTMSDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAccountManagementService, AccountManagementService>();
 
 static async System.Threading.Tasks.Task SeedSystemAdminAsync(OTMSDbContext context)
 {
