@@ -12,5 +12,7 @@
         public DateTime? UpdatedAt { get; set; }
 
         // Navigation properties
+        public Employee Employee { get; set; } = null!;
+        public Task Task { get; set; } = null!;
     }
 }
