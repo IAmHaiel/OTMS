@@ -86,6 +86,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 
 builder.Services.AddDbContext<OTMSDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+
+// Registered Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAccountManagementService, AccountManagementService>();
 
