@@ -68,6 +68,14 @@ namespace OTMS.Service.Services
                 return null;
             }
 
+            // Check if the account belongs to a System Admin and prevent deletion if it does
+            var systemAdminAccount = exist.Account.Role;
+
+            if (systemAdminAccount is not null && systemAdminAccount == "SystemAdmin")
+            {
+                throw new InvalidOperationException("Cannot delete a System Admin account.");
+            }
+
             // Delete the employee's account
             context.Employees.Remove(exist);
             await context.SaveChangesAsync();
