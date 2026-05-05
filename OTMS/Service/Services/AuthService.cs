@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OTMS.Data;
@@ -28,9 +30,16 @@ namespace OTMS.Service.Services
                     u => u.EmployeeNumber == request.EmployeeNumber
                 );
 
+            var accountStatus = employee?.Account?.AccountStatus;
+
             if (employee is null || employee.Account is null || string.IsNullOrEmpty(employee.Account.PasswordHash))
             {
                 return null;
+            }
+
+            if (accountStatus is null || accountStatus == "Deactivated")
+            {
+                throw new UnauthorizedAccessException("Account is deactivated. Please contact the administrator.");
             }
 
             var verificationResult =
