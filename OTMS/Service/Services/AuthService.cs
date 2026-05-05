@@ -88,27 +88,39 @@ namespace OTMS.Service.Services
 
             var employee = new Employee
             {
+                EmployeeId = Guid.NewGuid(),
                 EmployeeNumber = request.EmployeeNumber.Trim(),
-                EmployeeName = request.EmployeeName?.Trim(),
-                ContactNumber = request.ContactNumber?.Trim(),
-                Role = request.Role?.Trim()
+                EmployeeName = request.EmployeeName.Trim(),
+                ContactNumber = request.ContactNumber.Trim()
             };
 
-            var passwordHasher = new PasswordHasher<Employee>();
+            var account = new Account
+            {
+                AccountId = Guid.NewGuid(),
+                EmployeeId = employee.EmployeeId, // FK
+                Role = request.Role.Trim(),
+                AccountStatus = "Active",
+                CreatedAt = DateTime.UtcNow
+            };
 
-            employee.PasswordHash = passwordHasher.HashPassword(
-                employee,
+            var passwordHasher = new PasswordHasher<Account>();
+
+            account.PasswordHash = passwordHasher.HashPassword(
+                account,
                 generatedPassword
             );
 
+            employee.Account = account;
+
             context.Employees.Add(employee);
+            context.Accounts.Add(account);
             await context.SaveChangesAsync();
 
             return new EmployeeRegisterResponseDTO
             {
                 EmployeeNumber = employee.EmployeeNumber,
                 EmployeeName = employee.EmployeeName ?? string.Empty,
-                Role = employee.Role ?? string.Empty,
+                Role = account.Role ?? string.Empty,
                 GeneratedPassword = generatedPassword
             };
         }
@@ -117,11 +129,19 @@ namespace OTMS.Service.Services
 
         private async Task<TokenResponseDTO> CreateTokenResponse(Employee employee)
         {
+
+            if (employee.Account is null)
+            {
+                throw new InvalidOperationException(
+                    "Employee does not have an associated account."
+                );
+            }
+
             return new TokenResponseDTO
             {
                 AccessToken = CreateToken(employee),
                 RefreshToken = await GenerateAndSaveRefreshTokenAsync(employee),
-                Role = employee.Role ?? string.Empty
+                Role = employee.Account.Role ?? string.Empty
             };
         }
 
@@ -129,10 +149,18 @@ namespace OTMS.Service.Services
             Employee employee
         )
         {
+
+            if (employee.Account is null)
+            {
+                throw new InvalidOperationException(
+                    "Employee does not have an associated account."
+                );
+            }
+
             var refreshToken = GenerateRefreshToken();
 
-            employee.RefreshToken = refreshToken;
-            employee.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            employee.Account.RefreshToken = refreshToken;
+            employee.Account.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
 
             await context.SaveChangesAsync();
 
@@ -165,6 +193,14 @@ namespace OTMS.Service.Services
 
         private string CreateToken(Employee employee)
         {
+
+            if (employee.Account is null)
+            {
+                throw new InvalidOperationException(
+                    "Employee does not have an associated account."
+                );
+            }
+
             var claims = new List<Claim>
             {
                 new Claim(
@@ -173,11 +209,11 @@ namespace OTMS.Service.Services
                 ),
                 new Claim(
                     ClaimTypes.NameIdentifier,
-                    employee.Id.ToString()
+                    employee.Account.AccountId.ToString()
                 ),
                 new Claim(
                     ClaimTypes.Role,
-                    employee.Role ?? string.Empty
+                    employee.Account.Role ?? string.Empty
                 )
             };
 
@@ -215,12 +251,19 @@ namespace OTMS.Service.Services
             string refreshToken
         )
         {
-            var user = await context.Employees.FindAsync(userId);
+            var user = await context.Employees
+                .Include(e => e.Account)
+                .FirstOrDefaultAsync(e => e.Account != null && e.Account.AccountId == userId);
+
+            if (user is null || user.Account is null)
+            {
+                return null;
+            }
 
             if (
                 user is null ||
-                user.RefreshToken != refreshToken ||
-                user.RefreshTokenExpiryTime <= DateTime.UtcNow
+                user.Account.RefreshToken != refreshToken ||
+                user.Account.RefreshTokenExpiryTime <= DateTime.UtcNow
             )
             {
                 return null;
