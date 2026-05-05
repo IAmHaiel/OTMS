@@ -1,4 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OTMS.Data;
 using OTMS.Entities.DTOs.AccountManagement;
 using OTMS.Entities.DTOs.AccountManagement.Responses;
@@ -15,13 +18,22 @@ namespace OTMS.Service.Services
         {
             // Get the employee by employee number
             var exist = await context.Employees
+                .Include(e => e.Account)
                 .FirstOrDefaultAsync(e => e.EmployeeNumber == request.EmployeeNumber);
 
             // Check if the employee exists
-            if(exist is null)
+            if (exist is null || exist.Account is null)
             {
                 return null;
             }
+
+            var accountStatus = exist.Account.AccountStatus;
+
+            if(accountStatus == "Deactivated")
+            {
+                throw new InvalidOperationException("Account is already deactivated.");
+            }
+
 
             // Deactivate the employee's account
             await context.Employees
