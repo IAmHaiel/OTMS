@@ -2,7 +2,7 @@
 {
     public class TaskComment
     {
-        public Guid CommentId { get; set; }
+        public Guid TaskCommentId { get; set; }
         public Guid EmployeeId { get; set; }
         public Guid TaskId { get; set; }
 
