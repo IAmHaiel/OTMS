@@ -13,5 +13,6 @@
         public DateTime? UpdatedAt { get; set; }
 
         // Navigation properties
+        public Account Creator { get; set; } = null!;
     }
 }
