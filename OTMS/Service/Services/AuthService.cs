@@ -91,7 +91,8 @@ namespace OTMS.Service.Services
                 EmployeeId = Guid.NewGuid(),
                 EmployeeNumber = request.EmployeeNumber.Trim(),
                 EmployeeName = request.EmployeeName.Trim(),
-                ContactNumber = request.ContactNumber.Trim()
+                ContactNumber = request.ContactNumber.Trim(),
+                CreatedAt = DateTime.UtcNow
             };
 
             var account = new Account
