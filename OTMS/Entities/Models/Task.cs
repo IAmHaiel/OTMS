@@ -20,5 +20,12 @@
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
 
+        // Navigation properties
+        public Account Creator { get; set; } = null!;
+        public Account Assignee { get; set; } = null!;
+        public Account? Evaluator { get; set; }
+
+        public ICollection<TaskComment> Comments { get; set; } = new List<TaskComment>();
+
     }
 }
