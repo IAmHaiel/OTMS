@@ -16,5 +16,8 @@
         public DateTime CreatedAt { get; set; }
 
         // Navigation properties
+        public Account Account { get; set; } = null!;
+        public Task? Task { get; set; }
+        public Announcement? Announcement { get; set; }
     }
 }
