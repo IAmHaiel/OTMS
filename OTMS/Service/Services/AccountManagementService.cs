@@ -59,6 +59,50 @@ namespace OTMS.Service.Services
             };
         }
 
+        public async Task<AssignUserRoleResponseDTO?> AssignUserRole(AssignUserRoleDTO request)
+        {
+            // Get employee by employee number
+            // Get account by employee id
+            // Check if it both exists
+            // Check if the account belongs to a System Admin and prevent role change if it does
+            // Check if the role is already the same as the requested role
+            // Update the account role
+            // Return response DTO with success status and assigned role
+
+            var exist = context.Employees
+                .Include(e => e.Account)
+                .FirstOrDefault(e => e.EmployeeNumber == request.EmployeeNumber);
+            
+            if (exist is null || exist.Account is null)
+            {
+                throw new InvalidOperationException("Employee or account not found.");
+            }
+
+            if (exist.Account.Role == "SystemAdmin")
+            {
+                throw new InvalidOperationException("Cannot modify the role of a System Admin account.");
+            }
+
+            if (exist.Account.Role == request.RoleName)
+            {
+                throw new InvalidOperationException("The account already has the specified role.");
+            }
+
+            await context.Accounts
+                .Where(e => e.EmployeeId == exist.EmployeeId)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(e => e.Role, request.RoleName)
+                    .SetProperty(e => e.UpdatedAt, DateTime.UtcNow));
+
+            return new AssignUserRoleResponseDTO
+            {
+                EmployeeNumber = exist.EmployeeNumber,
+                RoleName = request.RoleName,
+                Success = true,
+                AssignedAt = DateTime.UtcNow
+            };
+        }
+
         public async Task<DeactivateUserResponseDTO?> DeactivateUser(DeactivateUserDTO request)
         {
             // Get the employee by employee number

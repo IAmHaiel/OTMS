@@ -7,6 +7,7 @@ namespace OTMS.Service.Interfaces
     {
         Task<DeactivateUserResponseDTO?> DeactivateUser(DeactivateUserDTO request);
         Task<ActivateUserResponseDTO?> ActivateUser(DeactivateUserDTO request);
+        Task<AssignUserRoleResponseDTO?> AssignUserRole(AssignUserRoleDTO request);
         Task<DeleteUserResponseDTO?> DeleteUser(DeactivateUserDTO request);
     }
 }

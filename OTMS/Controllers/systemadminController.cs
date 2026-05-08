@@ -46,6 +46,22 @@ namespace OTMS.Controllers
         }
 
         /// <summary>
+        /// Assigns a Role for the User Account. Only accessible to users with the "SystemAdmin" role.
+        /// </summary>
+        [Authorize(Roles = "SystemAdmin")]
+        [HttpPatch("assign-role")]
+        public async Task<IActionResult> AssignUserRole(AssignUserRoleDTO request)
+        {
+            var result = await accountManagementService.AssignUserRole(request);
+            if(result is null)
+            {
+                return NotFound(new { Message = "Employee not found." });
+            }
+            return Ok(result);
+        }
+
+
+        /// <summary>
         /// Deletes the User Account. Only accessible to users with the "SystemAdmin" role.
         /// </summary>
         [Authorize(Roles = "SystemAdmin")]
