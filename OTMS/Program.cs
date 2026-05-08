@@ -88,8 +88,10 @@ builder.Services.AddDbContext<OTMSDbContext>(options => options.UseSqlServer(bui
 
 
 // Registered Services
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAccountManagementService, AccountManagementService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
 
 static async System.Threading.Tasks.Task SeedSystemAdminAsync(OTMSDbContext context)
 {
