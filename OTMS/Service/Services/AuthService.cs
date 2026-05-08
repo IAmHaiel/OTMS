@@ -117,7 +117,7 @@ namespace OTMS.Service.Services
 
             if (exists)
             {
-                return null;
+                throw new InvalidOperationException("Employee Number already exists. Please choose a different one.");
             }
 
             var generatedPassword = GeneratePassword();
