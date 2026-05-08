@@ -66,8 +66,15 @@ namespace OTMS.Service.Services
                 if(Account is not null)
                 {
                     Account.FailedLoginAttempts++;
-                    context.Accounts.Add(Account);
+                    context.Accounts.Update(Account);
                     await context.SaveChangesAsync();
+                    
+                    if(Account.FailedLoginAttempts >= MaxFailedLoginAttempts)
+                    {
+                        Account.AccountStatus = "Deactivated";
+                        context.Accounts.Update(Account);
+                        await context.SaveChangesAsync();
+                    }
 
                     return null;
                 }
