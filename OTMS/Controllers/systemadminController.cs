@@ -39,6 +39,22 @@ namespace OTMS.Controllers
         }
 
         /// <summary>
+        /// Updates the User Account. Only accessible to users with the "SystemAdmin" role.
+        /// </summary>
+        [Authorize(Roles = "SystemAdmin")]
+        [HttpPut("update-user")]
+        public async Task<IActionResult> UpdateUser([FromQuery] UpdateEmployeeDTO request)
+        {
+            var result = await accountManagementService.UpdateEmployee(request);
+            if(result is null)
+            {
+                return NotFound(new { Message = "Employee not found." });
+            }
+            return Ok(result);
+        }
+
+
+        /// <summary>
         /// Deactivates the User Account. Only accessible to users with the "SystemAdmin" role.
         /// </summary>
         [Authorize(Roles = "SystemAdmin")]

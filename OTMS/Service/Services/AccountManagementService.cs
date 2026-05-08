@@ -232,5 +232,45 @@ namespace OTMS.Service.Services
             };
 
         }
+
+        public async Task<UpdateEmployeeResponseDTO?> UpdateEmployee(UpdateEmployeeDTO request)
+        {
+            var employee = await context.Employees
+                .FirstOrDefaultAsync(e => e.EmployeeNumber == request.EmployeeNumber);
+
+            if (employee == null) return null;
+
+            if (request.EmployeeNumber == "string" || String.IsNullOrEmpty(request.EmployeeNumber))
+            {
+                request.EmployeeNumber = employee.EmployeeNumber;
+            }
+
+            if (request.EmployeeName == "string" || String.IsNullOrEmpty(request.EmployeeName))
+            {
+                request.EmployeeName = employee.EmployeeName;
+            }
+
+            if (request.ContactNumber == "string" || String.IsNullOrEmpty(request.ContactNumber))
+            {
+                request.ContactNumber = employee.ContactNumber;
+            }
+
+            await context.Employees
+                .Where(e => e.EmployeeId == employee.EmployeeId)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(e => e.EmployeeNumber, request.EmployeeNumber)
+                    .SetProperty(e => e.EmployeeName, request.EmployeeName)
+                    .SetProperty(e => e.ContactNumber, request.ContactNumber)
+                    .SetProperty(e => e.UpdatedAt, DateTime.UtcNow));
+
+            return new UpdateEmployeeResponseDTO
+            {
+                EmployeeNumber = employee.EmployeeNumber,
+                EmployeeName = request.EmployeeName ?? employee.EmployeeName,
+                ContactNumber = request.ContactNumber ?? employee.ContactNumber,
+                Success = true
+            };
+        }
+
     }
 }
