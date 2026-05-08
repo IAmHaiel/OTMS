@@ -40,6 +40,21 @@ namespace OTMS.Controllers
         }
 
         /// <summary>
+        /// Searches the Account Status and the system will give the Accounts based on the Account Status (Active, Deactivated, Locked, Inactive). Only accessible to users with the "SystemAdmin" role.
+        /// </summary>
+        [Authorize(Roles = "SystemAdmin")]
+        [HttpGet("search-user-by-status")]
+        public async Task<IActionResult> SearchUserByStatus([FromQuery] SearchAccountStatusDTO accountStatus)
+        {
+            var result = await accountManagementService.GetAccountsByStatus(accountStatus);
+            if(result is null || !result.Any())
+            {
+                return NotFound(new { Message = "No employees found with the specified account status." });
+            }
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Updates the User Account. Only accessible to users with the "SystemAdmin" role.
         /// </summary>
         [Authorize(Roles = "SystemAdmin")]
