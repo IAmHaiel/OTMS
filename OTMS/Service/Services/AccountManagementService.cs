@@ -189,5 +189,88 @@ namespace OTMS.Service.Services
                 DeletedAt = DateTime.UtcNow
             };
         }
+
+        public async Task<List<RecentEmployeesResponseDTO>> GetRecentEmployees()
+        {
+            return await context.Employees
+                .Include(e => e.Account)
+                .OrderByDescending(e => e.CreatedAt)
+                .Take(10)
+                .Select(e => new RecentEmployeesResponseDTO
+                {
+                    EmployeeNumber = e.EmployeeNumber,
+                    EmployeeName = e.EmployeeName,
+                    ContactNumber = e.ContactNumber,
+                    Role = e.Account != null ? e.Account.Role : "No Account",
+                    AccountStatus = e.Account != null ? e.Account.AccountStatus : "No Account",
+                })
+                .ToListAsync();
+        }
+
+        public async Task<SearchUserResponseDTO?> SearchUser(SearchUserDTO request)
+        {
+            var employee = await context.Employees
+                .Include(e => e.Account)
+                .FirstOrDefaultAsync(e =>
+                    e.EmployeeName.Contains(request.Search) ||
+                    e.EmployeeNumber.Contains(request.Search) ||
+                    e.Account.Role.Contains(request.Search)
+                    );
+
+            if (employee is null || employee.Account is null)
+            {
+                return null;
+            }
+
+            return new SearchUserResponseDTO
+            {
+                EmployeeNumber = employee.EmployeeNumber,
+                EmployeeName = employee.EmployeeName,
+                Role = employee.Account.Role,
+                AccountStatus = employee.Account.AccountStatus,
+                Success = true
+            };
+
+        }
+
+        public async Task<UpdateEmployeeResponseDTO?> UpdateEmployee(string employeeNumber, UpdateEmployeeDTO request)
+        {
+            var employee = await context.Employees
+                .FirstOrDefaultAsync(e => e.EmployeeNumber == employeeNumber);
+
+            if (employee == null) return null;
+
+            if (request.EmployeeNumber == "string" || String.IsNullOrEmpty(request.EmployeeNumber))
+            {
+                request.EmployeeNumber = employee.EmployeeNumber;
+            }
+
+            if (request.EmployeeName == "string" || String.IsNullOrEmpty(request.EmployeeName))
+            {
+                request.EmployeeName = employee.EmployeeName;
+            }
+
+            if (request.ContactNumber == "string" || String.IsNullOrEmpty(request.ContactNumber))
+            {
+                request.ContactNumber = employee.ContactNumber;
+            }
+
+            await context.Employees
+                .Where(e => e.EmployeeId == employee.EmployeeId)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(e => e.EmployeeNumber, request.EmployeeNumber)
+                    .SetProperty(e => e.EmployeeName, request.EmployeeName)
+                    .SetProperty(e => e.ContactNumber, request.ContactNumber)
+                    .SetProperty(e => e.UpdatedAt, DateTime.UtcNow));
+
+            return new UpdateEmployeeResponseDTO
+            {
+                EmployeeNumber = request.EmployeeNumber,
+                EmployeeName = request.EmployeeName ?? employee.EmployeeName,
+                ContactNumber = request.ContactNumber ?? employee.ContactNumber,
+                Success = true
+            };
+        }
+
     }
 }
