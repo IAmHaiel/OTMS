@@ -930,6 +930,91 @@ body {
     width: auto;
 }
 
+.filter-bar {
+    display: flex;
+    gap: 10px;
+    padding: 0 0 16px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+    .filter-bar select {
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid #e9ecf5;
+        background: #f8f9fc;
+        font-size: 13px;
+        color: #2b3674;
+        cursor: pointer;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+        .filter-bar select:focus {
+            border-color: #4318ff;
+        }
+
+/* Search input wrapper */
+.search-input-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 180px;
+}
+
+    .search-input-wrap .search-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #a3aed0;
+        pointer-events: none;
+    }
+
+.search-input {
+    width: 100%;
+    padding: 8px 12px 8px 32px;
+    border-radius: 8px;
+    border: 1px solid #e9ecf5;
+    background: #f8f9fc;
+    font-size: 13px;
+    color: #2b3674;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+    .search-input:focus {
+        border-color: #4318ff;
+    }
+
+/* Small action button in table rows */
+.btn-xs {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 11px;
+    border-radius: 6px;
+    border: 1px solid #e9ecf5;
+    background: #f8f9fc;
+    color: #4318ff;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+    .btn-xs:hover {
+        background: #ede9ff;
+        border-color: #4318ff;
+    }
+
+/* Data table — extra columns need room */
+.data-table th:nth-child(6),
+.data-table td:nth-child(6) {
+    text-align: center;
+}
+ 
+
 /* ─── RESPONSIVE ───────────────────────────────────── */
 @media (max-width: 1200px) {
     .dashboard-bottom-row {
