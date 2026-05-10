@@ -39,7 +39,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     </PrivateRoute>
                 } />
 
-                <Route path="/employees/:employeeNumber" element={
+                <Route path="/employee_detail/:employeeNumber" element={
                     <PrivateRoute allowedRoles={['System Admin', 'SuperAdmin']}>
                         <PasswordChangedGuard>
                             <EmployeeDetail />

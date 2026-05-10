@@ -6,14 +6,14 @@
     min-height: 100vh;
     background: #f4f7fe;
     font-family: 'Segoe UI', sans-serif;
+    color: #2b3674;
 }
 
-/* ── Sidebar (mirrors SystemAdmin_Dashboard) ── */
+/* ── Sidebar ────────────────────────────────────────────────────────────── */
 .ed-sidebar {
     width: 250px;
     min-height: 100vh;
-    background: #fff;
-    border-right: 1px solid #e9ecf5;
+    background: #1b2559;
     display: flex;
     flex-direction: column;
     position: sticky;
@@ -22,8 +22,8 @@
 }
 
 .ed-sidebar-logo {
-    padding: 20px 20px 12px;
-    border-bottom: 1px solid #f0f2f8;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
 .ed-sidebar-logo-img {
@@ -43,29 +43,29 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 14px;
+    padding: 11px 14px;
     border-radius: 10px;
     cursor: pointer;
-    color: #a3aed0;
+    color: rgba(255,255,255,0.55);
     font-size: 14px;
     font-weight: 500;
     transition: background 0.15s, color 0.15s;
 }
 
     .ed-nav-item:hover {
-        background: #f4f7fe;
-        color: #2b3674;
+        background: rgba(255,255,255,0.08);
+        color: rgba(255,255,255,0.9);
     }
 
     .ed-nav-item.active {
-        background: #f4f7fe;
-        color: #4318ff;
+        background: rgba(255,255,255,0.14);
+        color: #fff;
         font-weight: 600;
     }
 
 .ed-sidebar-footer {
     padding: 16px;
-    border-top: 1px solid #f0f2f8;
+    border-top: 1px solid rgba(255,255,255,0.08);
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -78,8 +78,8 @@
 }
 
 .ed-avatar-sm {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: linear-gradient(135deg, #4318ff, #868cff);
     color: #fff;
@@ -99,12 +99,12 @@
 
     .ed-user-text span {
         font-size: 11px;
-        color: #a3aed0;
+        color: rgba(255,255,255,0.45);
     }
 
     .ed-user-text strong {
         font-size: 13px;
-        color: #2b3674;
+        color: #fff;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -113,22 +113,24 @@
 
 .ed-logout-btn {
     width: 100%;
-    padding: 8px;
-    background: #f8f9fc;
-    border: 1px solid #e9ecf5;
-    border-radius: 8px;
-    color: #e53e3e;
+    padding: 9px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    color: rgba(255,255,255,0.75);
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: all 0.2s ease;
 }
 
     .ed-logout-btn:hover {
-        background: #fff5f5;
+        background: rgba(229,62,62,0.25);
+        color: #fca5a5;
+        border-color: rgba(229,62,62,0.3);
     }
 
-/* ── Main area ── */
+/* ── Main area ──────────────────────────────────────────────────────────── */
 .ed-main {
     flex: 1;
     display: flex;
@@ -137,12 +139,12 @@
     overflow-y: auto;
 }
 
-/* ── Top bar ── */
+/* ── Top bar ────────────────────────────────────────────────────────────── */
 .ed-topbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 18px 28px 12px;
+    padding: 18px 28px;
     background: #fff;
     border-bottom: 1px solid #e9ecf5;
     position: sticky;
@@ -162,7 +164,6 @@
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    padding: 6px 0;
     transition: opacity 0.15s;
 }
 
@@ -177,20 +178,20 @@
     flex-wrap: wrap;
 }
 
-/* ── Buttons ── */
+/* ── Buttons ────────────────────────────────────────────────────────────── */
 .ed-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 16px;
-    border-radius: 9px;
+    padding: 9px 16px;
+    border-radius: 10px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     border: 1px solid #e9ecf5;
     background: #f8f9fc;
     color: #2b3674;
-    transition: background 0.15s, border-color 0.15s;
+    transition: background 0.15s;
 }
 
     .ed-btn:hover {
@@ -256,7 +257,7 @@
             background: #f0fdf9;
         }
 
-/* ── Hero banner ── */
+/* ── Hero banner ────────────────────────────────────────────────────────── */
 .ed-hero {
     background: linear-gradient(135deg, #4318ff 0%, #868cff 100%);
     padding: 28px 28px 0;
@@ -313,7 +314,7 @@
     }
 
 .ed-status-pill {
-    padding: 3px 12px;
+    padding: 4px 12px;
     border-radius: 20px;
     font-size: 11px;
     font-weight: 700;
@@ -348,24 +349,14 @@
     .ed-hero-meta span {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
+        gap: 6px;
         font-size: 13px;
         color: rgba(255,255,255,0.85);
     }
 
-.ed-not-found {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: rgba(255,255,255,0.8);
-    font-size: 15px;
-    padding-bottom: 24px;
-}
-
-/* ── Hero stats strip ── */
+/* ── Hero stats strip ───────────────────────────────────────────────────── */
 .ed-hero-stats {
     display: flex;
-    gap: 0;
     background: rgba(255,255,255,0.12);
     border-radius: 12px 12px 0 0;
     overflow: hidden;
@@ -374,12 +365,14 @@
 
 .ed-hero-stat {
     flex: 1;
+    /* CRITICAL: column layout so number sits ABOVE label */
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 14px 8px;
+    justify-content: center;
+    padding: 16px 10px;
     border-right: 1px solid rgba(255,255,255,0.15);
-    gap: 2px;
+    gap: 5px;
 }
 
     .ed-hero-stat:last-child {
@@ -387,9 +380,15 @@
     }
 
 .ed-hero-stat-value {
-    font-size: 22px;
-    font-weight: 800;
+    /* CRITICAL: display:block forces its own line; no inline sibling shrinkage */
+    display: block;
+    font-size: 26px;
+    font-weight: 900;
     color: #fff;
+    line-height: 1;
+    /* tabular-nums + letter-spacing stops "0" from rendering as a perfect circle */
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -1px;
 }
 
     .ed-hero-stat-value.green {
@@ -405,21 +404,24 @@
     }
 
 .ed-hero-stat-label {
+    display: block;
     font-size: 10px;
     color: rgba(255,255,255,0.7);
     text-align: center;
-    font-weight: 500;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
-/* ── Section tabs ── */
+/* ── Section tabs ───────────────────────────────────────────────────────── */
 .ed-section-tabs {
     display: flex;
     gap: 4px;
     padding: 16px 28px 0;
     background: #fff;
     border-bottom: 1px solid #e9ecf5;
+    overflow-x: auto;
 }
 
 .ed-section-tab {
@@ -436,7 +438,7 @@
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;
     transition: color 0.15s, border-color 0.15s;
-    border-radius: 6px 6px 0 0;
+    white-space: nowrap;
 }
 
     .ed-section-tab:hover {
@@ -448,13 +450,13 @@
         border-bottom-color: #4318ff;
     }
 
-/* ── Body ── */
+/* ── Body ───────────────────────────────────────────────────────────────── */
 .ed-body {
     padding: 24px 28px 40px;
     flex: 1;
 }
 
-/* ── Cards ── */
+/* ── Cards ──────────────────────────────────────────────────────────────── */
 .ed-card {
     background: #fff;
     border-radius: 16px;
@@ -486,25 +488,24 @@
         gap: 8px;
     }
 
-/* ── Overview grid ── */
+/* ── Overview grid ──────────────────────────────────────────────────────── */
 .ed-overview-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
 }
 
-/* ── Info rows ── */
+/* ── Info rows ──────────────────────────────────────────────────────────── */
 .ed-field-list {
     display: flex;
     flex-direction: column;
-    gap: 0;
 }
 
 .ed-info-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 0;
+    padding: 11px 0;
     border-bottom: 1px solid #f8f9fc;
     gap: 12px;
 }
@@ -519,7 +520,7 @@
     font-weight: 500;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
     flex-shrink: 0;
 }
 
@@ -538,7 +539,7 @@
         color: #e53e3e;
     }
 
-/* ── Summary chips ── */
+/* ── Summary chips ──────────────────────────────────────────────────────── */
 .ed-summary-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -548,18 +549,23 @@
 
 .ed-summary-chip {
     background: #f8f9fc;
-    border-radius: 10px;
-    padding: 12px 8px;
+    border-radius: 12px;
+    padding: 14px 8px;
     text-align: center;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    align-items: center;
+    gap: 5px;
 }
 
 .ed-summary-val {
-    font-size: 22px;
-    font-weight: 800;
+    display: block;
+    font-size: 28px;
+    font-weight: 900;
     color: #2b3674;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -1px;
 }
 
     .ed-summary-val.green {
@@ -575,14 +581,15 @@
     }
 
 .ed-summary-lbl {
+    display: block;
     font-size: 10px;
     color: #a3aed0;
-    font-weight: 500;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.4px;
 }
 
-/* ── Progress bar ── */
+/* ── Progress bar ───────────────────────────────────────────────────────── */
 .ed-perf-row {
     display: flex;
     justify-content: space-between;
@@ -629,11 +636,10 @@
         background: linear-gradient(90deg, #4318ff, #868cff);
     }
 
-/* ── Activity log list (preview) ── */
+/* ── Activity log list ──────────────────────────────────────────────────── */
 .ed-log-list {
     display: flex;
     flex-direction: column;
-    gap: 0;
 }
 
 .ed-log-item {
@@ -671,7 +677,7 @@
     white-space: nowrap;
 }
 
-/* ── Timeline (full activity log) ── */
+/* ── Timeline ───────────────────────────────────────────────────────────── */
 .ed-log-timeline {
     display: flex;
     flex-direction: column;
@@ -730,7 +736,7 @@
     gap: 5px;
 }
 
-/* ── Deliveries table ── */
+/* ── Table ──────────────────────────────────────────────────────────────── */
 .ed-table {
     width: 100%;
     border-collapse: collapse;
@@ -753,7 +759,7 @@
     }
 
     .ed-table td {
-        padding: 12px 12px;
+        padding: 12px;
         color: #2b3674;
         border-bottom: 1px solid #f8f9fc;
         vertical-align: middle;
@@ -774,7 +780,7 @@
     color: #4318ff !important;
 }
 
-/* ── Delivery status badges ── */
+/* ── Delivery status badges ─────────────────────────────────────────────── */
 .ed-delivery-badge {
     display: inline-block;
     padding: 3px 10px;
@@ -809,7 +815,7 @@
     color: #718096;
 }
 
-/* ── Badge count ── */
+/* ── Badge count & view-all ─────────────────────────────────────────────── */
 .ed-badge-count {
     font-size: 12px;
     color: #a3aed0;
@@ -819,7 +825,6 @@
     font-weight: 600;
 }
 
-/* ── View all link ── */
 .ed-view-all {
     font-size: 12px;
     color: #4318ff;
@@ -834,7 +839,7 @@
         text-decoration: underline;
     }
 
-/* ── Empty state ── */
+/* ── Empty state ────────────────────────────────────────────────────────── */
 .ed-empty {
     display: flex;
     flex-direction: column;
@@ -846,7 +851,7 @@
     font-size: 13px;
 }
 
-/* ── Skeleton ── */
+/* ── Skeleton & spin ────────────────────────────────────────────────────── */
 .skel {
     background: linear-gradient(90deg, #f0f2f8 25%, #e9ecf5 50%, #f0f2f8 75%);
     background-size: 200% 100%;
@@ -864,7 +869,6 @@
     }
 }
 
-/* ── Spin animation ── */
 .spin {
     animation: spin 0.8s linear infinite;
 }
@@ -875,7 +879,7 @@
     }
 }
 
-/* ── Edit Modal ── */
+/* ── Edit Modal ─────────────────────────────────────────────────────────── */
 .ed-modal-overlay {
     position: fixed;
     inset: 0;
@@ -1002,7 +1006,7 @@
     border-top: 1px solid #f0f2f8;
 }
 
-/* ── Responsive ── */
+/* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
     .ed-sidebar {
         display: none;
@@ -1017,7 +1021,7 @@
     }
 
     .ed-hero-stat {
-        min-width: 80px;
+        min-width: 90px;
     }
 
     .ed-summary-grid {
@@ -1028,19 +1032,8 @@
         grid-template-columns: 1fr;
     }
 
-    .ed-topbar {
-        padding: 14px 16px;
-    }
-
-    .ed-body {
-        padding: 16px;
-    }
-
-    .ed-hero {
-        padding: 20px 16px 0;
-    }
-
-    .ed-section-tabs {
-        padding: 12px 16px 0;
+    .ed-topbar, .ed-body, .ed-hero, .ed-section-tabs {
+        padding-left: 16px;
+        padding-right: 16px;
     }
 }

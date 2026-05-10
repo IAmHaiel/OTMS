@@ -50,12 +50,16 @@ body {
 
 
 .sidebar {
-    width: 260px;
-    min-width: 260px;
-    background: #1A2238;
+    width: 250px;
+    min-width: 250px;
+    background: #111827;
     color: white;
-    padding: 12px 0;
-    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.08);
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: sticky;
+    top: 0;
 }
 
 .sidebar-logo {
@@ -74,6 +78,8 @@ body {
 }
 
 .nav-item {
+    margin: 4px 14px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     gap: 14px;
@@ -96,8 +102,10 @@ body {
     .nav-item.active {
         background: rgba(255, 255, 255, 0.08);
         color: white;
+        border-right: none;
         border-right-color: var(--primary);
     }
+        
 
 .sidebar-footer {
     margin-top: auto;
@@ -263,10 +271,13 @@ body {
 
 /* ─── CONTENT ───────────────────────────────────────── */
 .dashboard-content {
-    padding: 0 28px 28px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 24px;
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
 }
 
 /* ─── CARD ───────────────────────────────────────── */
@@ -299,7 +310,6 @@ body {
         font-weight: 700;
         color: var(--text-primary);
         text-align: left;
-        flex: 1;
     }
 
 .view-all-link {
@@ -309,6 +319,7 @@ body {
     font-weight: 600;
     white-space: nowrap;
     flex-shrink: 0;
+    margin-left: auto;
     transition: var(--transition);
 }
 
@@ -1013,7 +1024,103 @@ body {
 .data-table td:nth-child(6) {
     text-align: center;
 }
- 
+
+
+/* ─── PAGINATION ───────────────────────────────────── */
+/* Append these rules to SystemAdmin_Dashboard.css     */
+
+.pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 4px 4px;
+    flex-wrap: wrap;
+    gap: 10px;
+    border-top: 1px solid var(--border);
+    margin-top: 12px;
+}
+
+.pagination-info {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.page-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: white;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+    .page-btn:hover:not(:disabled) {
+        background: #eef2ff;
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .page-btn.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    .page-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+.page-btn-nav {
+    color: var(--text-secondary);
+}
+
+.page-ellipsis {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    padding: 0 4px;
+    line-height: 32px;
+}
+
+/* ─── BTN DANGER (used in Employee modal) ─────────── */
+.btn-danger {
+    background: rgba(238, 93, 80, 0.08);
+    border-color: rgba(238, 93, 80, 0.3);
+    color: var(--danger);
+}
+
+    .btn-danger:hover:not(:disabled) {
+        background: rgba(238, 93, 80, 0.15);
+        border-color: var(--danger);
+    }
+
+.card.employees-table-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.employees-table-card .data-table-wrap {
+    flex: 1;
+}
+
+.employees-table-card .pagination-bar {
+    margin-top: auto;
+}
 
 /* ─── RESPONSIVE ───────────────────────────────────── */
 @media (max-width: 1200px) {
@@ -1054,8 +1161,13 @@ body {
     }
 
     .dashboard-header {
-        flex-direction: column;
-        align-items: flex-start;
+        padding: 20px 24px;
+        min-height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border);
+        background: white;
     }
 
     .field-row {

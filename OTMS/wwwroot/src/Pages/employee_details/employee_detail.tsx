@@ -20,7 +20,6 @@ import {
     ToggleRight,
     Trash2,
     Calendar,
-    Activity,
     Clock,
     LayoutDashboard,
     BarChart3,
@@ -60,9 +59,9 @@ const ROLES = [
     'System Admin',
     'Operation Admin',
     'Operation Team',
-    'Warehouse Staff',
+    'Coordinator',
     'Delivery Driver',
-    'Dispatcher',
+    'Encoder',
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -72,9 +71,7 @@ const toDisplayRole = (role: string) => role.replace(/([a-z])([A-Z])/g, '$1 $2')
 
 const fmtDate = (d: string | null) => {
     if (!d) return '—';
-    return new Date(d).toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric', year: 'numeric',
-    });
+    return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
 const fmtDateTime = (d: string | null) => {
@@ -102,7 +99,7 @@ function Skeleton({ w = '100%', h = 16 }: { w?: string | number; h?: number }) {
     return <div className="skel" style={{ width: w, height: h }} />;
 }
 
-// ─── Edit Profile Modal ───────────────────────────────────────────────────────
+// ─── Edit Modal ───────────────────────────────────────────────────────────────
 
 interface EditModalProps {
     profile: EmployeeProfile;
@@ -201,11 +198,9 @@ function EditProfileModal({ profile, onClose, onSaved }: EditModalProps) {
                     </div>
                     <button className="ed-icon-btn" onClick={onClose}><X size={16} /></button>
                 </div>
-
                 {apiError && (
                     <div className="ed-api-error"><AlertCircle size={14} /><span>{apiError}</span></div>
                 )}
-
                 <div className="ed-modal-form">
                     <div className="ed-field">
                         <label>Full Name</label>
@@ -231,7 +226,6 @@ function EditProfileModal({ profile, onClose, onSaved }: EditModalProps) {
                         </div>
                     </div>
                 </div>
-
                 <div className="ed-modal-actions">
                     <button className="ed-btn" onClick={onClose} disabled={submitting}>Cancel</button>
                     <button className="ed-btn ed-btn-primary" onClick={handleSave} disabled={submitting}>
@@ -257,26 +251,53 @@ export default function EmployeeDetail() {
     const [loadingProfile, setLoadingProfile] = useState(true);
     const [loadingDeliveries, setLoadingDeliveries] = useState(true);
     const [loadingLogs, setLoadingLogs] = useState(true);
+    const [fetchError, setFetchError] = useState('');
     const [showEdit, setShowEdit] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [activeSection, setActiveSection] = useState<'overview' | 'deliveries' | 'activity'>('overview');
 
     // ── Fetch profile ──
+    // Strategy: pull the full employee list and find by employeeNumber.
+    // This avoids needing a separate single-employee endpoint.
     useEffect(() => {
         if (!employeeNumber) return;
         const token = localStorage.getItem('authToken');
-        fetch(`/api/systemadmin/employee/${encodeURIComponent(employeeNumber)}`, {
+        const decoded = decodeURIComponent(employeeNumber);
+
+        fetch('/api/systemadmin/recent-employees', {
             headers: { 'Authorization': `Bearer ${token}` },
         })
             .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
-            .then(data => setProfile({
-                employeeNumber: data.employeeNumber,
-                employeeName: data.employeeName,
-                contactNumber: data.contactNumber,
-                role: data.role,
-                accountStatus: data.accountStatus ?? 'Unknown',
-            }))
-            .catch(() => setProfile(null))
+            .then((data: any[]) => {
+                const found = data.find((e: any) => e.employeeNumber === decoded);
+                if (!found) throw new Error('Employee not found in list');
+                setProfile({
+                    employeeNumber: found.employeeNumber,
+                    employeeName: found.employeeName,
+                    // handle both camelCase and snake_case field names from backend
+                    contactNumber: found.contactNumber ?? found.contact_number ?? '',
+                    role: found.role ?? '',
+                    accountStatus: found.accountStatus ?? found.account_status ?? 'Active',
+                });
+            })
+            .catch(() => {
+                // Fallback to a dedicated endpoint if list approach fails
+                fetch(`/api/systemadmin/get-user?employeeNumber=${encodeURIComponent(decoded)}`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                })
+                    .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+                    .then((data: any) => {
+                        setProfile({
+                            employeeNumber: data.employeeNumber,
+                            employeeName: data.employeeName,
+                            contactNumber: data.contactNumber ?? data.contact_number ?? '',
+                            role: data.role ?? '',
+                            accountStatus: data.accountStatus ?? data.account_status ?? 'Active',
+                        });
+                    })
+                    .catch(() => setFetchError('Could not load employee details. Please go back and try again.'))
+                    .finally(() => setLoadingProfile(false));
+            })
             .finally(() => setLoadingProfile(false));
     }, [employeeNumber]);
 
@@ -318,7 +339,7 @@ export default function EmployeeDetail() {
                 body: JSON.stringify({ employeeNumber: profile.employeeNumber }),
             });
             if (!res.ok) throw new Error('Delete failed');
-            navigate('/SystemAdmin_Dashboard', { replace: true });
+            navigate(-1);
         } catch {
             alert('Failed to delete employee. Please try again.');
         } finally {
@@ -346,7 +367,6 @@ export default function EmployeeDetail() {
         }
     };
 
-    // ── Delivery stats ──
     const totalDeliveries = deliveries.length;
     const completedDeliveries = deliveries.filter(d => d.status?.toLowerCase() === 'delivered').length;
     const inTransit = deliveries.filter(d => d.status?.toLowerCase() === 'in-transit').length;
@@ -354,23 +374,24 @@ export default function EmployeeDetail() {
 
     return (
         <div className="ed-page">
-            {/* ── Sidebar (mirrors dashboard) ── */}
+
+            {/* ── Sidebar ── */}
             <aside className="ed-sidebar">
                 <div className="ed-sidebar-logo">
                     <img src="/src/assets/SpeedexLogo.jpg" alt="Speedex Logo" className="ed-sidebar-logo-img" />
                 </div>
                 <nav className="ed-sidebar-nav">
                     {[
-                        { icon: LayoutDashboard, label: 'Dashboard', path: '/SystemAdmin_Dashboard' },
-                        { icon: Users, label: 'Manage Employees', path: '/SystemAdmin_Dashboard', active: true },
-                        { icon: Truck, label: 'Delivery', path: '/SystemAdmin_Dashboard' },
-                        { icon: BarChart3, label: 'Analytics', path: '/SystemAdmin_Dashboard' },
-                        { icon: UserCircle2, label: 'Profile', path: '/SystemAdmin_Dashboard' },
-                    ].map(({ icon: Icon, label, path, active }) => (
+                        { icon: LayoutDashboard, label: 'Dashboard' },
+                        { icon: Users, label: 'Manage Employees', active: true },
+                        { icon: Truck, label: 'Delivery' },
+                        { icon: BarChart3, label: 'Analytics' },
+                        { icon: UserCircle2, label: 'Profile' },
+                    ].map(({ icon: Icon, label, active }) => (
                         <div
                             key={label}
                             className={`ed-nav-item${active ? ' active' : ''}`}
-                            onClick={() => navigate(path)}
+                            onClick={() => navigate(-1)}
                         >
                             <Icon size={22} />
                             <span>{label}</span>
@@ -397,307 +418,311 @@ export default function EmployeeDetail() {
             {/* ── Main ── */}
             <main className="ed-main">
 
-                {/* ── Top bar ── */}
+                {/* Top bar */}
                 <div className="ed-topbar">
-                    <button className="ed-back-btn" onClick={() => navigate('/SystemAdmin_Dashboard')}>
-                        <ArrowLeft size={16} />
-                        Back to Employees
+                    <button className="ed-back-btn" onClick={() => navigate(-1)}>
+                        <ArrowLeft size={16} /> Back to Employees
                     </button>
-                    <div className="ed-topbar-actions">
-                        {profile && (
-                            <>
-                                <button
-                                    className={`ed-btn ed-btn-ghost ${profile.accountStatus === 'Active' ? 'deactivate' : 'activate'}`}
-                                    onClick={handleToggleStatus}
-                                >
-                                    {profile.accountStatus === 'Active'
-                                        ? <><ToggleLeft size={15} /> Deactivate</>
-                                        : <><ToggleRight size={15} /> Activate</>}
-                                </button>
-                                <button className="ed-btn ed-btn-secondary" onClick={() => setShowEdit(true)}>
-                                    <Pencil size={14} /> Edit Profile
-                                </button>
-                                <button className="ed-btn ed-btn-danger" onClick={handleDelete} disabled={deleting}>
-                                    {deleting ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />}
-                                    Delete
-                                </button>
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                {/* ── Profile Hero ── */}
-                <div className="ed-hero">
-                    <div className="ed-hero-inner">
-                        {loadingProfile ? (
-                            <div className="ed-hero-loading">
-                                <Skeleton w={72} h={72} />
-                                <div style={{ flex: 1 }}>
-                                    <Skeleton w={200} h={22} />
-                                    <Skeleton w={120} h={14} />
-                                </div>
-                            </div>
-                        ) : profile ? (
-                            <>
-                                <div className="ed-hero-avatar">
-                                    {profile.employeeName.charAt(0).toUpperCase()}
-                                </div>
-                                <div className="ed-hero-info">
-                                    <div className="ed-hero-name-row">
-                                        <h1>{profile.employeeName}</h1>
-                                        <span className={`ed-status-pill ${profile.accountStatus.toLowerCase()}`}>
-                                            {profile.accountStatus}
-                                        </span>
-                                    </div>
-                                    <div className="ed-hero-meta">
-                                        <span><Hash size={13} />{profile.employeeNumber}</span>
-                                        <span><Shield size={13} />{toDisplayRole(profile.role)}</span>
-                                        <span><Phone size={13} />{profile.contactNumber || '—'}</span>
-                                    </div>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="ed-not-found">
-                                <AlertCircle size={28} />
-                                <p>Employee not found.</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Delivery stat chips inside hero */}
-                    {!loadingProfile && profile && (
-                        <div className="ed-hero-stats">
-                            <div className="ed-hero-stat">
-                                <span className="ed-hero-stat-value">{totalDeliveries}</span>
-                                <span className="ed-hero-stat-label">Total Deliveries</span>
-                            </div>
-                            <div className="ed-hero-stat">
-                                <span className="ed-hero-stat-value green">{completedDeliveries}</span>
-                                <span className="ed-hero-stat-label">Completed</span>
-                            </div>
-                            <div className="ed-hero-stat">
-                                <span className="ed-hero-stat-value amber">{inTransit}</span>
-                                <span className="ed-hero-stat-label">In Transit</span>
-                            </div>
-                            <div className="ed-hero-stat">
-                                <span className="ed-hero-stat-value red">{failedDeliveries}</span>
-                                <span className="ed-hero-stat-label">Failed / Returned</span>
-                            </div>
-                            <div className="ed-hero-stat">
-                                <span className="ed-hero-stat-value">{activityLogs.length}</span>
-                                <span className="ed-hero-stat-label">Activity Logs</span>
-                            </div>
+                    {profile && (
+                        <div className="ed-topbar-actions">
+                            <button
+                                className={`ed-btn ed-btn-ghost${profile.accountStatus === 'Active' ? ' deactivate' : ' activate'}`}
+                                onClick={handleToggleStatus}
+                            >
+                                {profile.accountStatus === 'Active'
+                                    ? <><ToggleLeft size={15} /> Deactivate</>
+                                    : <><ToggleRight size={15} /> Activate</>}
+                            </button>
+                            <button className="ed-btn ed-btn-secondary" onClick={() => setShowEdit(true)}>
+                                <Pencil size={14} /> Edit Profile
+                            </button>
+                            <button className="ed-btn ed-btn-danger" onClick={handleDelete} disabled={deleting}>
+                                {deleting ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />} Delete
+                            </button>
                         </div>
                     )}
                 </div>
 
-                {/* ── Section Tabs ── */}
-                <div className="ed-section-tabs">
-                    {([
-                        { key: 'overview', icon: User, label: 'Overview' },
-                        { key: 'deliveries', icon: Truck, label: 'Delivery History' },
-                        { key: 'activity', icon: ClipboardList, label: 'Activity Logs' },
-                    ] as const).map(({ key, icon: Icon, label }) => (
-                        <button
-                            key={key}
-                            className={`ed-section-tab${activeSection === key ? ' active' : ''}`}
-                            onClick={() => setActiveSection(key)}
-                        >
-                            <Icon size={15} />{label}
-                        </button>
-                    ))}
-                </div>
+                {/* Error state */}
+                {fetchError && (
+                    <div className="ed-fetch-error">
+                        <AlertCircle size={18} />
+                        <p>{fetchError}</p>
+                        <button className="ed-btn ed-btn-secondary" onClick={() => navigate(-1)}>Go Back</button>
+                    </div>
+                )}
 
-                {/* ── Content ── */}
-                <div className="ed-body">
-
-                    {/* OVERVIEW */}
-                    {activeSection === 'overview' && (
-                        <div className="ed-overview-grid">
-                            {/* Personal Info */}
-                            <div className="ed-card">
-                                <div className="ed-card-header">
-                                    <h3><User size={15} /> Personal Information</h3>
+                {/* Hero */}
+                {!fetchError && (
+                    <div className="ed-hero">
+                        <div className="ed-hero-inner">
+                            {loadingProfile ? (
+                                <div className="ed-hero-loading">
+                                    <Skeleton w={72} h={72} />
+                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                        <Skeleton w={200} h={22} />
+                                        <Skeleton w={140} h={14} />
+                                    </div>
                                 </div>
-                                {loadingProfile ? (
-                                    <div className="ed-field-list">
-                                        {[1, 2, 3, 4].map(i => <div key={i} className="ed-info-row"><Skeleton w="40%" /><Skeleton w="55%" /></div>)}
+                            ) : profile ? (
+                                <>
+                                    <div className="ed-hero-avatar">
+                                        {profile.employeeName.charAt(0).toUpperCase()}
                                     </div>
-                                ) : profile ? (
-                                    <div className="ed-field-list">
-                                        {[
-                                            { label: 'Employee Number', value: profile.employeeNumber, icon: Hash },
-                                            { label: 'Full Name', value: profile.employeeName, icon: User },
-                                            { label: 'Contact Number', value: profile.contactNumber || '—', icon: Phone },
-                                            { label: 'Role', value: toDisplayRole(profile.role), icon: Shield },
-                                            { label: 'Account Status', value: profile.accountStatus, icon: CheckCircle2 },
-                                        ].map(({ label, value, icon: Icon }) => (
-                                            <div key={label} className="ed-info-row">
-                                                <span className="ed-info-label"><Icon size={12} />{label}</span>
-                                                <span className={`ed-info-value${label === 'Account Status' ? ` status-${value.toLowerCase()}` : ''}`}>
-                                                    {value}
-                                                </span>
-                                            </div>
-                                        ))}
+                                    <div className="ed-hero-info">
+                                        <div className="ed-hero-name-row">
+                                            <h1>{profile.employeeName}</h1>
+                                            <span className={`ed-status-pill ${profile.accountStatus.toLowerCase()}`}>
+                                                {profile.accountStatus}
+                                            </span>
+                                        </div>
+                                        <div className="ed-hero-meta">
+                                            <span><Hash size={13} />{profile.employeeNumber}</span>
+                                            <span><Shield size={13} />{toDisplayRole(profile.role)}</span>
+                                            <span><Phone size={13} />{profile.contactNumber || '—'}</span>
+                                        </div>
                                     </div>
-                                ) : (
-                                    <div className="ed-empty"><AlertCircle size={18} /><p>No profile data</p></div>
-                                )}
-                            </div>
+                                </>
+                            ) : null}
+                        </div>
 
-                            {/* Delivery Summary */}
+                        {!loadingProfile && profile && (
+                            <div className="ed-hero-stats">
+                                {[
+                                    { label: 'Total Deliveries', value: totalDeliveries, cls: '' },
+                                    { label: 'Completed', value: completedDeliveries, cls: 'green' },
+                                    { label: 'In Transit', value: inTransit, cls: 'amber' },
+                                    { label: 'Failed / Returned', value: failedDeliveries, cls: 'red' },
+                                    { label: 'Activity Logs', value: activityLogs.length, cls: '' },
+                                ].map(({ label, value, cls }) => (
+                                    <div key={label} className="ed-hero-stat">
+                                        <span className={`ed-hero-stat-value ${cls}`}>{loadingDeliveries ? '—' : value}</span>
+                                        <span className="ed-hero-stat-label">{label}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Section tabs */}
+                {!fetchError && (
+                    <div className="ed-section-tabs">
+                        {([
+                            { key: 'overview', icon: User, label: 'Overview' },
+                            { key: 'deliveries', icon: Truck, label: 'Delivery History' },
+                            { key: 'activity', icon: ClipboardList, label: 'Activity Logs' },
+                        ] as const).map(({ key, icon: Icon, label }) => (
+                            <button
+                                key={key}
+                                className={`ed-section-tab${activeSection === key ? ' active' : ''}`}
+                                onClick={() => setActiveSection(key)}
+                            >
+                                <Icon size={15} />{label}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {/* Body */}
+                {!fetchError && (
+                    <div className="ed-body">
+
+                        {/* OVERVIEW */}
+                        {activeSection === 'overview' && (
+                            <div className="ed-overview-grid">
+                                <div className="ed-card">
+                                    <div className="ed-card-header">
+                                        <h3><User size={15} /> Personal Information</h3>
+                                    </div>
+                                    {loadingProfile ? (
+                                        <div className="ed-field-list">
+                                            {[1, 2, 3, 4, 5].map(i => (
+                                                <div key={i} className="ed-info-row">
+                                                    <Skeleton w="40%" /><Skeleton w="55%" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : profile ? (
+                                        <div className="ed-field-list">
+                                            {[
+                                                { label: 'Employee Number', value: profile.employeeNumber, icon: Hash },
+                                                { label: 'Full Name', value: profile.employeeName, icon: User },
+                                                { label: 'Contact Number', value: profile.contactNumber || '—', icon: Phone },
+                                                { label: 'Role', value: toDisplayRole(profile.role), icon: Shield },
+                                                { label: 'Account Status', value: profile.accountStatus, icon: CheckCircle2 },
+                                            ].map(({ label, value, icon: Icon }) => (
+                                                <div key={label} className="ed-info-row">
+                                                    <span className="ed-info-label"><Icon size={12} />{label}</span>
+                                                    <span className={`ed-info-value${label === 'Account Status' ? ` status-${value.toLowerCase()}` : ''}`}>
+                                                        {value}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="ed-empty"><AlertCircle size={18} /><p>No profile data</p></div>
+                                    )}
+                                </div>
+
+                                <div className="ed-card">
+                                    <div className="ed-card-header">
+                                        <h3><Truck size={15} /> Delivery Summary</h3>
+                                    </div>
+                                    {loadingDeliveries ? (
+                                        <div className="ed-field-list">
+                                            {[1, 2, 3, 4].map(i => (
+                                                <div key={i} className="ed-info-row">
+                                                    <Skeleton w="40%" /><Skeleton w="30%" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="ed-summary-grid">
+                                                {[
+                                                    { label: 'Total', value: totalDeliveries, cls: '' },
+                                                    { label: 'Delivered', value: completedDeliveries, cls: 'green' },
+                                                    { label: 'In Transit', value: inTransit, cls: 'amber' },
+                                                    { label: 'Failed', value: failedDeliveries, cls: 'red' },
+                                                ].map(({ label, value, cls }) => (
+                                                    <div key={label} className="ed-summary-chip">
+                                                        <span className={`ed-summary-val ${cls}`}>{value}</span>
+                                                        <span className="ed-summary-lbl">{label}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            {totalDeliveries > 0 && (
+                                                <div style={{ marginTop: 16 }}>
+                                                    <div className="ed-perf-row">
+                                                        <span className="ed-perf-label">Completion Rate</span>
+                                                        <span className="ed-perf-pct">
+                                                            {Math.round(completedDeliveries / totalDeliveries * 100)}%
+                                                        </span>
+                                                    </div>
+                                                    <div className="ed-progress-bar">
+                                                        <div
+                                                            className="ed-progress-fill green"
+                                                            style={{ width: `${Math.round(completedDeliveries / totalDeliveries * 100)}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+
+                                <div className="ed-card ed-card-full">
+                                    <div className="ed-card-header">
+                                        <h3><Clock size={15} /> Recent Activity</h3>
+                                        <button className="ed-view-all" onClick={() => setActiveSection('activity')}>View all →</button>
+                                    </div>
+                                    {loadingLogs ? (
+                                        <div className="ed-log-list">
+                                            {[1, 2, 3].map(i => (
+                                                <div key={i} className="ed-log-item">
+                                                    <Skeleton w="70%" /><Skeleton w="25%" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : activityLogs.length === 0 ? (
+                                        <div className="ed-empty"><ClipboardList size={18} /><p>No activity recorded</p></div>
+                                    ) : (
+                                        <div className="ed-log-list">
+                                            {activityLogs.slice(0, 5).map(log => (
+                                                <div key={log.id} className="ed-log-item">
+                                                    <span className="ed-log-dot" />
+                                                    <span className="ed-log-desc">{log.description}</span>
+                                                    <span className="ed-log-time">{fmtDateTime(log.timestamp)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* DELIVERIES */}
+                        {activeSection === 'deliveries' && (
                             <div className="ed-card">
                                 <div className="ed-card-header">
-                                    <h3><Truck size={15} /> Delivery Summary</h3>
+                                    <h3><Truck size={15} /> Delivery History</h3>
+                                    <span className="ed-badge-count">{totalDeliveries} records</span>
                                 </div>
                                 {loadingDeliveries ? (
-                                    <div className="ed-field-list">
-                                        {[1, 2, 3, 4].map(i => <div key={i} className="ed-info-row"><Skeleton w="40%" /><Skeleton w="30%" /></div>)}
-                                    </div>
+                                    <div className="ed-empty"><Loader2 size={22} className="spin" /><p>Loading…</p></div>
+                                ) : deliveries.length === 0 ? (
+                                    <div className="ed-empty"><Package size={24} /><p>No delivery records found</p></div>
                                 ) : (
-                                    <>
-                                        <div className="ed-summary-grid">
-                                            {[
-                                                { label: 'Total', value: totalDeliveries, cls: '' },
-                                                { label: 'Delivered', value: completedDeliveries, cls: 'green' },
-                                                { label: 'In Transit', value: inTransit, cls: 'amber' },
-                                                { label: 'Failed', value: failedDeliveries, cls: 'red' },
-                                            ].map(({ label, value, cls }) => (
-                                                <div key={label} className="ed-summary-chip">
-                                                    <span className={`ed-summary-val ${cls}`}>{value}</span>
-                                                    <span className="ed-summary-lbl">{label}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        {totalDeliveries > 0 && (
-                                            <div style={{ marginTop: 16 }}>
-                                                <div className="ed-perf-row">
-                                                    <span className="ed-perf-label">Completion Rate</span>
-                                                    <span className="ed-perf-pct">{Math.round(completedDeliveries / totalDeliveries * 100)}%</span>
-                                                </div>
-                                                <div className="ed-progress-bar">
-                                                    <div className="ed-progress-fill green" style={{ width: `${Math.round(completedDeliveries / totalDeliveries * 100)}%` }} />
-                                                </div>
-                                            </div>
-                                        )}
-                                    </>
+                                    <div style={{ overflowX: 'auto' }}>
+                                        <table className="ed-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>TRACKING #</th>
+                                                    <th>RECIPIENT</th>
+                                                    <th>DESTINATION</th>
+                                                    <th>STATUS</th>
+                                                    <th>ASSIGNED</th>
+                                                    <th>DELIVERED</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {deliveries.map(d => (
+                                                    <tr key={d.deliveryId}>
+                                                        <td className="ed-tracking-num">{d.trackingNumber}</td>
+                                                        <td>{d.recipient}</td>
+                                                        <td>{d.destination}</td>
+                                                        <td>
+                                                            <span className={`ed-delivery-badge ${deliveryStatusClass(d.status)}`}>
+                                                                {d.status}
+                                                            </span>
+                                                        </td>
+                                                        <td>{fmtDate(d.assignedAt)}</td>
+                                                        <td>{fmtDate(d.deliveredAt)}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 )}
                             </div>
+                        )}
 
-                            {/* Recent Activity (preview) */}
-                            <div className="ed-card ed-card-full">
+                        {/* ACTIVITY LOGS */}
+                        {activeSection === 'activity' && (
+                            <div className="ed-card">
                                 <div className="ed-card-header">
-                                    <h3><Clock size={15} /> Recent Activity</h3>
-                                    <button className="ed-view-all" onClick={() => setActiveSection('activity')}>
-                                        View all →
-                                    </button>
+                                    <h3><ClipboardList size={15} /> Activity Logs</h3>
+                                    <span className="ed-badge-count">{activityLogs.length} entries</span>
                                 </div>
                                 {loadingLogs ? (
-                                    <div className="ed-log-list">
-                                        {[1, 2, 3].map(i => (
-                                            <div key={i} className="ed-log-item">
-                                                <Skeleton w="70%" /><Skeleton w="25%" />
-                                            </div>
-                                        ))}
-                                    </div>
+                                    <div className="ed-empty"><Loader2 size={22} className="spin" /><p>Loading logs…</p></div>
                                 ) : activityLogs.length === 0 ? (
-                                    <div className="ed-empty"><ClipboardList size={18} /><p>No activity recorded</p></div>
+                                    <div className="ed-empty"><ClipboardList size={24} /><p>No activity logs found</p></div>
                                 ) : (
-                                    <div className="ed-log-list">
-                                        {activityLogs.slice(0, 5).map(log => (
-                                            <div key={log.id} className="ed-log-item">
-                                                <span className="ed-log-dot" />
-                                                <span className="ed-log-desc">{log.description}</span>
-                                                <span className="ed-log-time">{fmtDateTime(log.timestamp)}</span>
+                                    <div className="ed-log-timeline">
+                                        {activityLogs.map((log, idx) => (
+                                            <div key={log.id} className="ed-timeline-item">
+                                                <div className="ed-timeline-line">
+                                                    <div className="ed-timeline-dot" />
+                                                    {idx < activityLogs.length - 1 && <div className="ed-timeline-connector" />}
+                                                </div>
+                                                <div className="ed-timeline-content">
+                                                    <p className="ed-timeline-desc">{log.description}</p>
+                                                    <span className="ed-timeline-time">
+                                                        <Calendar size={11} />{fmtDateTime(log.timestamp)}
+                                                    </span>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
                                 )}
                             </div>
-                        </div>
-                    )}
-
-                    {/* DELIVERIES */}
-                    {activeSection === 'deliveries' && (
-                        <div className="ed-card">
-                            <div className="ed-card-header">
-                                <h3><Truck size={15} /> Delivery History</h3>
-                                <span className="ed-badge-count">{totalDeliveries} records</span>
-                            </div>
-                            {loadingDeliveries ? (
-                                <div className="ed-empty"><Loader2 size={22} className="spin" /><p>Loading deliveries…</p></div>
-                            ) : deliveries.length === 0 ? (
-                                <div className="ed-empty"><Package size={24} /><p>No delivery records found</p></div>
-                            ) : (
-                                <div style={{ overflowX: 'auto' }}>
-                                    <table className="ed-table">
-                                        <thead>
-                                            <tr>
-                                                <th>TRACKING #</th>
-                                                <th>RECIPIENT</th>
-                                                <th>DESTINATION</th>
-                                                <th>STATUS</th>
-                                                <th>ASSIGNED</th>
-                                                <th>DELIVERED</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {deliveries.map(d => (
-                                                <tr key={d.deliveryId}>
-                                                    <td className="ed-tracking-num">{d.trackingNumber}</td>
-                                                    <td>{d.recipient}</td>
-                                                    <td>{d.destination}</td>
-                                                    <td>
-                                                        <span className={`ed-delivery-badge ${deliveryStatusClass(d.status)}`}>
-                                                            {d.status}
-                                                        </span>
-                                                    </td>
-                                                    <td>{fmtDate(d.assignedAt)}</td>
-                                                    <td>{fmtDate(d.deliveredAt)}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* ACTIVITY LOGS */}
-                    {activeSection === 'activity' && (
-                        <div className="ed-card">
-                            <div className="ed-card-header">
-                                <h3><ClipboardList size={15} /> Activity Logs</h3>
-                                <span className="ed-badge-count">{activityLogs.length} entries</span>
-                            </div>
-                            {loadingLogs ? (
-                                <div className="ed-empty"><Loader2 size={22} className="spin" /><p>Loading logs…</p></div>
-                            ) : activityLogs.length === 0 ? (
-                                <div className="ed-empty"><ClipboardList size={24} /><p>No activity logs found</p></div>
-                            ) : (
-                                <div className="ed-log-timeline">
-                                    {activityLogs.map((log, idx) => (
-                                        <div key={log.id} className="ed-timeline-item">
-                                            <div className="ed-timeline-line">
-                                                <div className="ed-timeline-dot" />
-                                                {idx < activityLogs.length - 1 && <div className="ed-timeline-connector" />}
-                                            </div>
-                                            <div className="ed-timeline-content">
-                                                <p className="ed-timeline-desc">{log.description}</p>
-                                                <span className="ed-timeline-time">
-                                                    <Calendar size={11} />{fmtDateTime(log.timestamp)}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </div>
+                )}
             </main>
 
-            {/* Edit Modal */}
             {showEdit && profile && (
                 <EditProfileModal
                     profile={profile}
