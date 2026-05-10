@@ -425,8 +425,14 @@ export default function EmployeeDetail() {
 
     const navigate = useNavigate();
 
+    const [adminName, setAdminName] =
+        useState('Super Admin');
+
+    const [adminInitial, setAdminInitial] =
+        useState('S');
+
     const [activeTab, setActiveTab] =
-        useState<NavTab>('dashboard');
+        useState<NavTab>('employees');
 
     const [profile, setProfile] =
         useState<EmployeeProfile | null>(
@@ -601,6 +607,19 @@ export default function EmployeeDetail() {
                 setLoadingProfile(false)
             );
     }, [employeeNumber]);
+
+    useEffect(() => {
+        const storedName =
+            localStorage.getItem('employeeName');
+
+        if (storedName) {
+            setAdminName(storedName);
+
+            setAdminInitial(
+                storedName.charAt(0).toUpperCase()
+            );
+        }
+    }, []);
 
     // ─────────────────────────────────────────
     // FETCH DELIVERIES
@@ -849,11 +868,7 @@ export default function EmployeeDetail() {
                 <div className="sidebar-footer">
                     <div className="user-block">
                         <div className="avatar-circle">
-                            {profile?.employeeName
-                                ? profile.employeeName
-                                    .charAt(0)
-                                    .toUpperCase()
-                                : 'E'}
+                            {adminInitial}
                         </div>
 
                         <div className="user-text">
@@ -862,8 +877,7 @@ export default function EmployeeDetail() {
                             </span>
 
                             <strong>
-                                {profile?.employeeName ??
-                                    'Employee'}
+                                {adminName}
                             </strong>
                         </div>
                     </div>

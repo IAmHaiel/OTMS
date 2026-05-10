@@ -96,7 +96,7 @@ const STAT_CARDS = [
     { icon: AlertCircle, bg: 'bg-danger', label: 'LOCKED ACCOUNTS', sub: 'Needs admin action' },
 ];
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 7;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -428,23 +428,23 @@ interface DashboardTabProps {
 }
 
 function DashboardTab({ employees, recentEmployees, activityLogs, loading, onSelectEmployee }: DashboardTabProps) {
+
+    const activeCount = employees.filter(e => e.accountStatus === 'Active').length;
+    const deactivatedCount = employees.filter(e => e.accountStatus === 'Deactivated').length;
     return (
         <div className="dashboard-content">
             <div className="stats-row">
-                {STAT_CARDS.map(({ icon: Icon, bg, label, sub }) => (
+                {[
+                    { icon: Users, bg: 'bg-primary', label: 'TOTAL EMPLOYEES', value: employees.length, sub: 'All registered staff' },
+                    { icon: CheckCircle2, bg: 'bg-success', label: 'ACTIVE', value: activeCount, sub: 'Currently active accounts' },
+                    { icon: AlertCircle, bg: 'bg-danger', label: 'DEACTIVATED', value: deactivatedCount, sub: 'Accounts needing review' },
+                    { icon: Shield, bg: 'bg-warning', label: 'ROLES', value: ROLES.length, sub: 'Available role types' },
+                ].map(({ icon: Icon, bg, label, value, sub }) => (
                     <div key={label} className="stat-card">
                         <div className={`stat-icon ${bg}`}><Icon size={18} /></div>
                         <div className="stat-text">
                             <p className="stat-label">{label}</p>
-                            <h3 className="stat-value">
-                                {label === 'TOTAL EMPLOYEES'
-                                    ? employees.length
-                                    : label === 'ACTIVE TASKS'
-                                        ? activityLogs.length
-                                        : label === 'TASKS COMPLETED'
-                                            ? 128
-                                            : recentEmployees.filter(emp => emp.accountStatus === 'Deactivated').length}
-                            </h3>
+                            <h3 className="stat-value">{value}</h3>
                             <small>{sub}</small>
                         </div>
                     </div>
@@ -547,9 +547,6 @@ function ManageEmployeesTab({ employees, loading, onSelectEmployee, onAddEmploye
     const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
     const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-    const activeCount = employees.filter(e => e.accountStatus === 'Active').length;
-    const deactivatedCount = employees.filter(e => e.accountStatus === 'Deactivated').length;
-
     const goToPage = (page: number) => {
         if (page < 1 || page > totalPages) return;
         setCurrentPage(page);
@@ -574,23 +571,6 @@ function ManageEmployeesTab({ employees, loading, onSelectEmployee, onAddEmploye
 
     return (
         <div className="dashboard-content">
-            <div className="stats-row">
-                {[
-                    { icon: Users, bg: 'bg-primary', label: 'TOTAL EMPLOYEES', value: employees.length, sub: 'All registered staff' },
-                    { icon: CheckCircle2, bg: 'bg-success', label: 'ACTIVE', value: activeCount, sub: 'Currently active accounts' },
-                    { icon: AlertCircle, bg: 'bg-danger', label: 'DEACTIVATED', value: deactivatedCount, sub: 'Accounts needing review' },
-                    { icon: Shield, bg: 'bg-warning', label: 'ROLES', value: ROLES.length, sub: 'Available role types' },
-                ].map(({ icon: Icon, bg, label, value, sub }) => (
-                    <div key={label} className="stat-card">
-                        <div className={`stat-icon ${bg}`}><Icon size={18} /></div>
-                        <div className="stat-text">
-                            <p className="stat-label">{label}</p>
-                            <h3 className="stat-value">{value}</h3>
-                            <small>{sub}</small>
-                        </div>
-                    </div>
-                ))}
-            </div>
 
             <div className="card employees-table-card" style={{ minHeight: 520 }}>
                 <div className="card-header">
